@@ -186,21 +186,18 @@ function geometryFor(obj){
     const width=obj.size[0]/1000;
     const height=obj.size[1]/1000;
     const depth=obj.size[2]/1000;
-    const geometry=new THREE.SphereGeometry(.5,32,20);
-    geometry.scale(width,height,depth);
-    const position=geometry.attributes.position;
-    for(let i=0;i<position.count;i+=1){
-      const y=position.getY(i);
-      const heightRatio=THREE.MathUtils.clamp((y/height)+.5,0,1);
-      const pinch=heightRatio>.68?1-(heightRatio-.68)*.9:1;
-      const angle=Math.atan2(position.getZ(i)/depth,position.getX(i)/width);
-      const fold=1+Math.sin(angle*6)*.045*(1-heightRatio*.55);
-      position.setX(i,position.getX(i)*(1.18-heightRatio*.22)*pinch*fold);
-      position.setZ(i,position.getZ(i)*(1.12-heightRatio*.12)*pinch/fold-Math.max(0,heightRatio-.42)*depth*.2);
-      if(y<-height*.36) position.setY(i,-height*.36);
-      else if(heightRatio>.82) position.setY(i,y-(heightRatio-.82)*height*.18);
-    }
-    position.needsUpdate=true;
+    const profile=new THREE.Shape();
+    profile.moveTo(-depth*.46,-height*.43);
+    profile.bezierCurveTo(-depth*.54,-height*.10,-depth*.44,height*.30,-depth*.22,height*.49);
+    profile.bezierCurveTo(-depth*.10,height*.40,-depth*.02,height*.12,depth*.09,-height*.04);
+    profile.bezierCurveTo(depth*.20,-height*.15,depth*.40,-height*.08,depth*.48,height*.01);
+    profile.bezierCurveTo(depth*.55,-height*.10,depth*.52,-height*.34,depth*.39,-height*.42);
+    profile.bezierCurveTo(depth*.15,-height*.49,-depth*.20,-height*.50,-depth*.46,-height*.43);
+    profile.closePath();
+    const bevel=Math.min(width,height,depth)*.045;
+    const geometry=new THREE.ExtrudeGeometry(profile,{depth:width,bevelEnabled:true,bevelThickness:bevel,bevelSize:bevel,bevelSegments:5,curveSegments:20,steps:1});
+    geometry.translate(0,0,-width/2);
+    geometry.rotateY(Math.PI/2);
     geometry.computeVertexNormals();
     return geometry;
   }
@@ -435,7 +432,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=8;
+  state.layoutVersion=9;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -464,7 +461,7 @@ function loadPlan3(){
     {id:uid(),name:'노트북 스탠드 높이 지지대',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
     {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
-    {id:uid(),name:'침상 두 번째 빈백 쿠션 · 480 × 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
+    {id:uid(),name:'침상 대형 빈백 쿠션 · 600 × 600mm',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
   );
   const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20)&&o.pos[2]>cabinetZ);
   cabinetDoors.forEach(door=>{
@@ -552,4 +549,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==8) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==9) loadPlan3();
