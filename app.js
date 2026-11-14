@@ -51,6 +51,7 @@ function rebuildCargo(){
   const clearWheelhouseWidth=Math.min(w-.02,(state.cargo.wheelhouseWidth||1330)/1000);
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
+  const lowPlinthDepth=Math.max(wheelhouseDepth,(w-.92)/2);
   const wheelhouseShape=new THREE.Shape();
   const baseHalfLength=.58,archHalfLength=.40;
   const shoulderHeight=.20,archRise=.19;
@@ -65,8 +66,8 @@ function rebuildCargo(){
   wheelhouseGeo.translate(0,0,-wheelhouseDepth/2);
   const wheelhouseEdgeMat=new THREE.LineBasicMaterial({color:0x505955,transparent:true,opacity:.55});
   for(const x of [-wheelhouseX,wheelhouseX]){
-    const plinth=new THREE.Mesh(new THREE.BoxGeometry(wheelhouseDepth,shoulderHeight,baseHalfLength*2),interiorMat);
-    plinth.position.set(x,.015+shoulderHeight/2,l*.22);
+    const plinth=new THREE.Mesh(new THREE.BoxGeometry(lowPlinthDepth,shoulderHeight,baseHalfLength*2),interiorMat);
+    plinth.position.set(Math.sign(x)*(w/2-lowPlinthDepth/2),.015+shoulderHeight/2,l*.22);
     plinth.castShadow=true;
     plinth.receiveShadow=true;
     cargoGroup.add(plinth);
