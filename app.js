@@ -53,7 +53,7 @@ function rebuildCargo(){
   const wheelhouseX=w/2-wheelhouseDepth/2;
   const wheelhouseShape=new THREE.Shape();
   const baseHalfLength=.44,shoulderHalfLength=.415,archHalfLength=.40;
-  const shoulderHeight=.17,archRise=.22;
+  const shoulderHeight=.20,archRise=.19;
   wheelhouseShape.moveTo(-baseHalfLength,0);
   wheelhouseShape.lineTo(-baseHalfLength,.08);
   wheelhouseShape.lineTo(-shoulderHalfLength,shoulderHeight);
@@ -201,8 +201,8 @@ function buildPerson(){
   for(const side of [-1,1]){
     const elbowX=side===-1&&state.personPose?.rightElbowToCabinet?side*.31:side*.23;
     personGroup.add(limbBetween([side*.11,.50,.03],[side*.12,.44,.34],.07,pants));
-    personGroup.add(limbBetween([side*.12,.44,.34],[side*.12,.14,.36],.06,pants));
-    const foot=new THREE.Mesh(new THREE.BoxGeometry(.14,.075,.25),shoes); foot.position.set(side*.12,.065,.45); foot.castShadow=true; personGroup.add(foot);
+    personGroup.add(limbBetween([side*.12,.44,.34],[side*.12,.23,.36],.06,pants));
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(.14,.075,.25),shoes); foot.position.set(side*.12,.1575,.45); foot.castShadow=true; personGroup.add(foot);
     personGroup.add(limbBetween([side*.15,.93,.015],[elbowX,.73,.17],.047,shirt));
     personGroup.add(limbBetween([elbowX,.73,.17],[side*.17,.67,.34],.04,skin));
   }
@@ -349,7 +349,7 @@ function sideDeskDevices(desk,deskInnerX){
   const armPlateX=monitorX+31;
   const armLength=armPoleX-(armPlateX+15);
   const armX=armPlateX+15+armLength/2;
-  return [
+  const devices=[
     {id:uid(),name:'책상 왼쪽 27인치 모니터 본체 · 620 × 380mm',size:[32,380,620],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
     {id:uid(),name:'27인치 모니터 화면 · 좌측 좌석 방향',size:[5,350,590],pos:[monitorX-18.5,monitorY,monitorZ],rot:[0,0,0],material:'screen'},
     {id:uid(),name:'모니터암 VESA 결합판',size:[30,110,110],pos:[armPlateX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
@@ -361,6 +361,8 @@ function sideDeskDevices(desk,deskInnerX){
     {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'}
   ];
+  devices.forEach(device=>{device.pos[1]+=80;});
+  return devices;
 }
 
 function rearDeskDevices(desk){
@@ -373,7 +375,7 @@ function rearDeskDevices(desk){
   const armZ=armPlateZ+15+armLength/2;
   const laptopX=desk.size[0]/4;
   const laptopZ=desk.pos[2]-50;
-  return [
+  const devices=[
     {id:uid(),name:'책상 왼쪽 27인치 모니터 본체 · 620 × 380mm',size:[620,380,32],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
     {id:uid(),name:'27인치 모니터 화면 · 침상 좌석 방향',size:[590,350,5],pos:[monitorX,monitorY,monitorZ-18.5],rot:[0,0,0],material:'screen'},
     {id:uid(),name:'모니터암 VESA 결합판',size:[110,110,30],pos:[monitorX,monitorY,armPlateZ],rot:[0,0,0],material:'black'},
@@ -385,6 +387,8 @@ function rearDeskDevices(desk){
     {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[340,230,24],pos:[laptopX,815,laptopZ+40],rot:[-12,0,0],material:'black'},
     {id:uid(),name:'노트북 화면 · 침상 좌석 방향',size:[315,205,5],pos:[laptopX,815,laptopZ+25],rot:[-12,0,0],material:'screen'}
   ];
+  devices.forEach(device=>{device.pos[1]+=80;});
+  return devices;
 }
 
 function loadPlan1(){
@@ -411,8 +415,15 @@ function loadPlan1(){
     {id:uid(),name:'침상 앞쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedFrontEdge+15],rot:[0,0,0],material:'oak'},
     {id:uid(),name:'침상 뒤쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedRearEdge-15],rot:[0,0,0],material:'oak'}
   ];
+  state.objects[0].pos[1]+=80;
+  [1,2].forEach(i=>{state.objects[i].size[1]+=80;state.objects[i].pos[1]+=40;});
+  [3,4].forEach(i=>{state.objects[i].pos[1]+=80;});
+  [5,6,7].forEach(i=>{state.objects[i].size[1]+=80;state.objects[i].pos[1]+=40;});
+  state.objects[0].name='후면 책상 상판 · 깊이 700mm · 높이 730mm';
+  state.objects[3].name='침상 프레임 상판 높이 420mm';
+  state.objects[4].name='침상 쿠션 포함 좌면 높이 480mm';
   state.objects.push(...rearDeskDevices(state.objects[0]));
-  setPersonPose([-deskWidth/4,0,deskInnerEdge-330],0);
+  setPersonPose([-deskWidth/4,80,deskInnerEdge-330],0);
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();saveLocal();
 }
@@ -452,8 +463,15 @@ function loadPlan2(includeDevices=true){
     {id:uid(),name:'침상 격벽 쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedFront+15],rot:[0,0,0],material:'oak'},
     {id:uid(),name:'침상 트렁크 쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedRear-15],rot:[0,0,0],material:'oak'}
   ];
+  state.objects[0].pos[1]+=80;
+  [1,2].forEach(i=>{state.objects[i].size[1]+=80;state.objects[i].pos[1]+=40;});
+  [3,4,5].forEach(i=>{state.objects[i].pos[1]+=80;});
+  [6,7,8].forEach(i=>{state.objects[i].size[1]+=80;state.objects[i].pos[1]+=40;});
+  state.objects[0].name='오른쪽 책상 상판 · 깊이 700mm · 높이 730mm';
+  state.objects[3].name='침상 프레임 상판 높이 420mm';
+  state.objects[4].name='침상 쿠션 포함 좌면 높이 480mm';
   if(includeDevices!==false) state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
-  setPersonPose([deskInnerX-220,0,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
+  setPersonPose([deskInnerX-220,80,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
   state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id:state.objects[0].id;
   rebuildObjects();saveLocal();
 }
@@ -511,13 +529,16 @@ function loadPlan3(){
   bedCenterSupport.pos[2]=bedZ;
   bedFrontSupport.pos[2]=bedFront+15;
   bedRearSupport.pos[2]=bedRear-15;
+  desk.name='오른쪽 책상 상판 · 깊이 700mm · 높이 730mm';
+  bedFrame.name=`수납 가능한 ${bedLength.toLocaleString()}mm 침상 프레임 · 상판 420mm`;
+  bedCushion.name=`${bedLength.toLocaleString()}mm 침상 쿠션 · 좌면 높이 480mm`;
   bedFrame.hideWhenStorageOpen=true;
   bedCushion.hideWhenStorageOpen=true;
   state.storageOpen=false;
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
-  setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=20;
+  setPersonPose([deskInnerX-180,80,desk.pos[2]-desk.size[2]/2+500],90,true);
+  state.layoutVersion=21;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -548,6 +569,12 @@ function loadPlan3(){
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 대형 빈백 쿠션 · 사람 방향',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,-155,0],material:'fabric',shape:'beanbag'}
   );
+  state.objects.filter(o=>o.pos[2]===cabinetZ&&o.size[1]===590&&o.size[2]===cabinetDepth).forEach(panel=>{panel.size[1]=670;panel.pos[1]=365;});
+  const cabinetTop=state.objects.find(o=>o.pos[2]===cabinetZ&&o.pos[1]===635&&o.size[1]===30&&o.size[2]===cabinetDepth);
+  if(cabinetTop){cabinetTop.pos[1]=715;cabinetTop.name='책상 연결 왼쪽 마감 상판 · 높이 730mm';}
+  state.objects.filter(o=>o.pos[2]<cabinetZ&&o.size[0]===doorWidth&&o.size[1]===560).forEach(panel=>{panel.size[1]=670;panel.pos[1]=365;});
+  state.objects.filter(o=>(o.material==='black'||o.material==='screen')&&o.pos[1]>=667.5&&o.size[1]!==18).forEach(device=>{device.pos[1]+=80;});
+  state.objects.filter(o=>o.shape==='beanbag').forEach(beanbag=>{beanbag.pos[1]+=80;});
   const rearFixedSideWidth=(cabinetWidth-rearDoorSpan)/2;
   const rearFixedSideX=rearDoorSpan/2+rearFixedSideWidth/2;
   state.objects.push(
@@ -556,12 +583,15 @@ function loadPlan3(){
     {id:uid(),name:'트렁크 수납장 아래 고정 마감판',size:[rearDoorSpan,10,18],pos:[0,35,doorZ],rot:[0,0,0],material:'birch'},
     {id:uid(),name:'트렁크 수납장 위 고정 마감판',size:[rearDoorSpan,40,18],pos:[0,600,doorZ],rot:[0,0,0],material:'birch'}
   );
+  state.objects.filter(o=>o.pos[2]===doorZ&&o.size[0]===rearFixedSideWidth).forEach(panel=>{panel.size[1]=670;panel.pos[1]=365;});
+  const rearTopPanel=state.objects.find(o=>o.pos[2]===doorZ&&o.size[0]===rearDoorSpan&&o.size[1]===40);
+  if(rearTopPanel)rearTopPanel.pos[1]=680;
   const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.pos[2]===doorZ&&(o.size[2]===18||o.size[2]===20));
   cabinetDoors.forEach(door=>{
-    door.size[1]=540;door.pos[1]=310;delete door.shape;
+    door.size[1]=620;door.pos[1]=350;delete door.shape;
     if(door.pos[0]===doorStep){door.shape='double-rounded-opening';door.centerGap=36;}
   });
-  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===560&&o.size[2]===20&&o.pos[2]<cabinetZ).forEach(panel=>{panel.shape='double-rounded-opening';panel.centerGap=36;});
+  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===670&&o.size[2]===20&&o.pos[2]<cabinetZ).forEach(panel=>{panel.shape='double-rounded-opening';panel.centerGap=36;});
   cabinetDoors.forEach(door=>{
     const hingeSide=door.pos[0]<0?-1:1;
     const outward=door.pos[2]>cabinetZ?1:-1;
@@ -574,7 +604,7 @@ function loadPlan3(){
   const cabinetHandles=state.objects.filter(o=>o.material==='black'&&o.size[0]===80&&o.size[1]===18&&o.size[2]===18);
   cabinetHandles.forEach(handle=>{
     handle.size=[18,80,18];
-    handle.pos[1]=310;
+    handle.pos[1]=350;
     const door=cabinetDoors.find(item=>item.pos[0]===handle.pos[0]&&item.pos[2]>cabinetZ);
     if(!door)return;
     const angle=door.openRot[1];
@@ -591,10 +621,17 @@ function loadPlan3(){
   if(ps5){
     ps5.name='중간 선반 위에 눕힌 흰색 PS5';
     ps5.size=[390,104,260];
-    ps5.pos=[doorStep,377,cabinetZ];
+    ps5.pos=[doorStep,432,cabinetZ];
   }
   state.objects=state.objects.filter(o=>!(o.size[0]===18&&o.size[1]===360&&o.size[2]===270));
   [-doorStep,0,doorStep].forEach((x,i)=>state.objects.push({id:uid(),name:`${['왼쪽','가운데','오른쪽'][i]} 수납함 중간 나무 선반`,size:[doorWidth,30,cabinetDepth-30],pos:[x,310,cabinetZ],rot:[0,0,0],material:'oak'}));
+  const cabinetShelves=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===30&&o.size[2]===cabinetDepth-30&&o.pos[2]===cabinetZ).sort((a,b)=>a.pos[0]-b.pos[0]);
+  const cabinetInnerHalf=cabinetWidth/2-30;
+  const sideShelfWidth=cabinetInnerHalf-(doorStep/2+15);
+  const sideShelfX=(cabinetInnerHalf+doorStep/2+15)/2;
+  const shelfWidths=[sideShelfWidth,doorStep-30,sideShelfWidth];
+  const shelfXs=[-sideShelfX,0,sideShelfX];
+  cabinetShelves.forEach((shelf,i)=>{shelf.name=`수납장 ${['왼쪽','가운데','오른쪽'][i]} 전체 폭 중간 선반`;shelf.size[0]=shelfWidths[i];shelf.pos[0]=shelfXs[i];shelf.pos[1]=365;});
   const bedLeft=bedFrame.pos[0]-bedFrame.size[0]/2;
   const bayWidth=(bedFrame.size[0]-bedCenterSupport.size[0])/2;
   const crateXs=[bedLeft+bayWidth/2,bedFrame.pos[0]+bedCenterSupport.size[0]/2+bayWidth/2];
@@ -609,8 +646,8 @@ function loadPlan3(){
     const hingeX=x-direction*width/2;
     return {
       id:uid(),name,size:[width,18,hatchDepth],
-      pos:[x,349,bedZ],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-      openPos:[hingeX+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*width/2,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*width/2,bedZ],
+      pos:[x,429,bedZ],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
+      openPos:[hingeX+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*width/2,429+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*width/2,bedZ],
       openRot:[0,0,direction*hatchAngle]
     };
   };
@@ -625,8 +662,8 @@ function loadPlan3(){
     const hingeX=centerHatchX-sideDirection*centerHatchWidth/2;
     return {
       id:uid(),name,size:[centerHatchWidth,18,halfHatchDepth],
-      pos:[centerHatchX,349,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-      openPos:[hingeX+sideDirection*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,z],
+      pos:[centerHatchX,429,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
+      openPos:[hingeX+sideDirection*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,429+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,z],
       openRot:[0,0,sideDirection*hatchAngle]
     };
   };
@@ -643,6 +680,9 @@ function loadPlan3(){
     id:uid(),name:'침상 통로쪽 우유박스 가림 칸막이',size:[30,285,bedLength-40],
     pos:[bedFrame.pos[0]+bedFrame.size[0]/2-15,167.5,bedZ],rot:[0,0,0],material:'oak'
   };
+  fixedDeskStrip.pos[1]=405;
+  aislePartition.size[1]=365;
+  aislePartition.pos[1]=182.5;
   state.objects.push(...crateObjects,aislePartition,fixedDeskStrip,...hatchObjects);
   state.objects.filter(o=>o.material==='fabric').forEach(cushion=>{cushion.hideWhenStorageOpen=true;});
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
@@ -652,15 +692,15 @@ function loadPlan3(){
 
 function loadPlan4(){
   loadPlan3();
-  const bedFrame=state.objects.find(o=>o.name.includes('침상 · 수납함과 맞닿음'));
-  const desk=state.objects.find(o=>o.name.startsWith('우측 장형 책상'));
+  const bedFrame=state.objects.find(o=>o.hideWhenStorageOpen&&o.material==='oak');
+  const desk=state.objects[0];
   const bedRear=bedFrame.pos[2]+bedFrame.size[2]/2;
   const deskFront=desk.pos[2]-desk.size[2]/2;
   const backrestLength=Math.min(820,bedRear-deskFront-40);
   const backrest={
     id:uid(),name:'책상 맞은편 침상 나무 등받이 · 8도 후경사',
     size:[30,500,backrestLength],
-    pos:[bedFrame.pos[0]-bedFrame.size[0]/2+55,650,(bedRear+deskFront)/2],
+    pos:[bedFrame.pos[0]-bedFrame.size[0]/2+55,730,(bedRear+deskFront)/2],
     rot:[0,0,8],material:'oak'
   };
   state.objects=state.objects.filter(o=>!o.name.startsWith('왼쪽 벽 세움 쿠션')&&!o.name.startsWith('침상 대형 빈백 쿠션'));
@@ -693,4 +733,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==20){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==21){if(hadPlan4)loadPlan4();else loadPlan3();}
