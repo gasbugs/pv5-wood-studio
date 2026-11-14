@@ -423,6 +423,9 @@ function loadPlan1(){
   state.objects[0].name='후면 책상 상판 · 깊이 700mm · 높이 730mm';
   state.objects[3].name='침상 프레임 상판 높이 420mm';
   state.objects[4].name='침상 쿠션 포함 좌면 높이 480mm';
+  state.objects[6].name='침상 운전석 방향 전체 폭 고정 마감판 · 상부 인출 전용';
+  state.objects[6].size[1]=390;
+  state.objects[6].pos[1]=195;
   state.objects.push(...rearDeskDevices(state.objects[0]));
   setPersonPose([-deskWidth/4,80,deskInnerEdge-330],0);
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
@@ -471,6 +474,9 @@ function loadPlan2(includeDevices=true){
   state.objects[0].name='오른쪽 책상 상판 · 깊이 700mm · 높이 730mm';
   state.objects[3].name='침상 프레임 상판 높이 420mm';
   state.objects[4].name='침상 쿠션 포함 좌면 높이 480mm';
+  state.objects[7].name='침상 운전석 방향 전체 폭 고정 마감판 · 상부 인출 전용';
+  state.objects[7].size[1]=390;
+  state.objects[7].pos[1]=195;
   if(includeDevices!==false) state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
   setPersonPose([deskInnerX-220,80,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
   state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id:state.objects[0].id;
@@ -539,7 +545,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,80,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=25;
+  state.layoutVersion=26;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -739,4 +745,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==25){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==26){if(hadPlan4)loadPlan4();else loadPlan3();}
