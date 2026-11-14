@@ -41,7 +41,7 @@
       <button class="view-btn" data-view="door">슬라이드도어</button><button class="view-btn" data-view="rear">트렁크</button>
     </div>
     <div class="spec" id="spec"></div>
-    <div class="legend"><span><i class="dot" style="background:#c5965c"></i>오크 가구</span><span><i class="dot" style="background:#659e82"></i>좌방석</span><span><i class="dot" style="background:#202527"></i>장비</span><span><i class="dot" style="background:#333"></i>정원형 바퀴</span></div>
+    <div class="legend"><span><i class="dot" style="background:#c5965c"></i>오크 가구</span><span><i class="dot" style="background:#659e82"></i>좌방석</span><span><i class="dot" style="background:#202527"></i>장비</span><span><i class="dot" style="background:#58615d"></i>반원형 휠하우스</span></div>
   </aside>
   <main id="stage">
     <div class="loading" id="loading">3D 장면을 불러오는 중…</div>
@@ -68,11 +68,27 @@ function box(name,w,h,d,x,y,z,mat=M.oak,round=false){const g=new THREE.BoxGeomet
 function cyl(name,r,len,x,y,z,mat=M.metal,axis='x'){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,48),mat);m.name=name;m.position.set(x,y,z);if(axis==='x')m.rotation.z=Math.PI/2;if(axis==='z')m.rotation.x=Math.PI/2;m.castShadow=true;return m}
 function add(group,...items){items.flat().forEach(v=>v&&group.add(v));return group}
 function label(text,x,y,z){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#f4f8f6';ctx.font='600 44px sans-serif';ctx.textAlign='center';ctx.fillText(text,256,74);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.position.set(x,y,z);s.scale.set(1.1,.275,1);return s}
+function wheelHouse(side){
+  const radius=.34,depth=.1175;
+  const shape=new THREE.Shape();
+  shape.moveTo(-radius,0);
+  shape.absarc(0,0,radius,Math.PI,0,true);
+  shape.lineTo(radius,0);
+  shape.lineTo(-radius,0);
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:48});
+  const material=new THREE.MeshStandardMaterial({color:0x58615d,roughness:.78,metalness:.08});
+  const house=new THREE.Mesh(geometry,material);
+  house.name='circular interior wheel house';
+  house.rotation.y=side<0?Math.PI/2:-Math.PI/2;
+  house.position.set(side<0?-.7825:.7825,.045,.60);
+  house.castShadow=house.receiveShadow=true;
+  return house;
+}
 
 function vehicle(){const g=new THREE.Group();g.name='PV5 vehicle';
   add(g,box('cargo floor',1.565,.045,2.255,0,.022,0,new THREE.MeshStandardMaterial({color:0x7d6952,roughness:.9})),box('bulkhead',1.565,1.45,.035,0,.75,-1.145,new THREE.MeshStandardMaterial({color:0xaab4af,transparent:true,opacity:.18})),box('left wall',.035,1.35,2.255,-.8,.7,0,new THREE.MeshStandardMaterial({color:0x9aa9a2,transparent:true,opacity:.12})),box('right rail',.035,.38,2.255,.8,.2,0,new THREE.MeshStandardMaterial({color:0x9aa9a2,transparent:true,opacity:.12})));
   const lineMat=new THREE.LineBasicMaterial({color:0x739687,transparent:true,opacity:.65});const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.62,1.52,2.34)),lineMat);edges.position.y=.76;g.add(edges);
-  [-1,1].forEach(side=>[-.73,.72].forEach(z=>{const wheel=cyl('full circular wheel',.36,.17,side*.89,.36,z,M.metal,'x');g.add(wheel);const hub=cyl('wheel hub',.17,.182,side*.89,.36,z,new THREE.MeshStandardMaterial({color:0x8d9692,metalness:.7,roughness:.25}),'x');g.add(hub)}));
+  add(g,wheelHouse(-1),wheelHouse(1));
   return g;
 }
 
