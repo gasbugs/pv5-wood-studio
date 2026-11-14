@@ -517,7 +517,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=19;
+  state.layoutVersion=20;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -547,6 +547,14 @@ function loadPlan3(){
     {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 대형 빈백 쿠션 · 사람 방향',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,-155,0],material:'fabric',shape:'beanbag'}
+  );
+  const rearFixedSideWidth=(cabinetWidth-rearDoorSpan)/2;
+  const rearFixedSideX=rearDoorSpan/2+rearFixedSideWidth/2;
+  state.objects.push(
+    {id:uid(),name:'트렁크 수납장 왼쪽 고정 마감판',size:[rearFixedSideWidth,590,18],pos:[-rearFixedSideX,325,doorZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 수납장 오른쪽 고정 마감판',size:[rearFixedSideWidth,590,18],pos:[rearFixedSideX,325,doorZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 수납장 아래 고정 마감판',size:[rearDoorSpan,10,18],pos:[0,35,doorZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 수납장 위 고정 마감판',size:[rearDoorSpan,40,18],pos:[0,600,doorZ],rot:[0,0,0],material:'birch'}
   );
   const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.pos[2]===doorZ&&(o.size[2]===18||o.size[2]===20));
   cabinetDoors.forEach(door=>{
@@ -685,4 +693,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==19){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==20){if(hadPlan4)loadPlan4();else loadPlan3();}
