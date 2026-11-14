@@ -478,14 +478,24 @@ function loadPlan3(){
   crateRows.slice(0,3).forEach((z,i)=>crateObjects.push({id:uid(),name:`침상 아래 만타 우유상자 왼쪽 ${i+1} · 23L`,size:[340,270,340],pos:[crateXs[0],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
   crateRows.forEach((z,i)=>crateObjects.push({id:uid(),name:`침상 아래 만타 우유상자 안쪽 ${i+1} · 23L`,size:[340,270,340],pos:[crateXs[1],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
   const hatchAngle=70;
-  const hatchDepth=340;
-  const hatchObjects=crateRows.map((z,i)=>({
-    id:uid(),name:`침상 상부 리프트 수납 도어 ${i+1} · 위로 열림`,size:[bedFrame.size[0]-30,18,hatchDepth],
-    pos:[bedFrame.pos[0],349,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-    openPos:[bedFrame.pos[0],349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*hatchDepth/2,z+hatchDepth/2-Math.cos(THREE.MathUtils.degToRad(hatchAngle))*hatchDepth/2],
-    openRot:[hatchAngle,0,0]
-  }));
-  state.objects.push(...crateObjects,...hatchObjects);
+  const hatchWidth=bayWidth-20;
+  const hatchDepth=bedLength-40;
+  const hatchObjects=crateXs.map((x,i)=>{
+    const direction=i===0?1:-1;
+    const hingeX=x-direction*hatchWidth/2;
+    return {
+      id:uid(),name:i===0?'좌측 침상 대형 수납 상판':'중앙 침상 대형 수납 상판',size:[hatchWidth,18,hatchDepth],
+      pos:[x,349,bedZ],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
+      openPos:[hingeX+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*hatchWidth/2,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*hatchWidth/2,bedZ],
+      openRot:[0,0,direction*hatchAngle]
+    };
+  });
+  crateObjects.forEach(crate=>{crate.size[2]=300;});
+  const aislePartition={
+    id:uid(),name:'침상 통로쪽 우유박스 가림 칸막이',size:[30,285,bedLength-40],
+    pos:[bedFrame.pos[0]+bedFrame.size[0]/2-15,167.5,bedZ],rot:[0,0,0],material:'oak'
+  };
+  state.objects.push(...crateObjects,aislePartition,...hatchObjects);
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();
   saveLocal();
@@ -511,4 +521,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
-if(state.objects.some(o=>o.size[0]===104&&o.size[1]===390&&o.size[2]===260)) loadPlan3();
+if(state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===340&&o.size[1]===270&&o.size[2]===340))) loadPlan3();
