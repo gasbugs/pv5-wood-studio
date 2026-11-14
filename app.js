@@ -130,7 +130,7 @@ function buildPerson(){
     personGroup.add(limbBetween([side*.15,.93,.015],[elbowX,.73,.17],.047,shirt));
     personGroup.add(limbBetween([elbowX,.73,.17],[side*.17,.67,.34],.04,skin));
   }
-  const label=makeLabel('사람'); label.position.set(0,1.43,0); label.scale.set(.38,.11,1); personGroup.add(label);
+  const label=makeLabel('인체 배치'); label.position.set(0,1.43,0); label.scale.set(.48,.11,1); personGroup.add(label);
   scene.add(personGroup);
 }
 
@@ -191,11 +191,14 @@ function geometryFor(obj){
     const position=geometry.attributes.position;
     for(let i=0;i<position.count;i+=1){
       const y=position.getY(i);
-      const heightRatio=(y/height)+.5;
-      const bulge=1.12-heightRatio*.28;
-      position.setX(i,position.getX(i)*bulge);
-      position.setZ(i,position.getZ(i)*bulge);
-      if(y<-height*.42) position.setY(i,-height*.42);
+      const heightRatio=THREE.MathUtils.clamp((y/height)+.5,0,1);
+      const pinch=heightRatio>.68?1-(heightRatio-.68)*.9:1;
+      const angle=Math.atan2(position.getZ(i)/depth,position.getX(i)/width);
+      const fold=1+Math.sin(angle*6)*.045*(1-heightRatio*.55);
+      position.setX(i,position.getX(i)*(1.18-heightRatio*.22)*pinch*fold);
+      position.setZ(i,position.getZ(i)*(1.12-heightRatio*.12)*pinch/fold-Math.max(0,heightRatio-.42)*depth*.2);
+      if(y<-height*.36) position.setY(i,-height*.36);
+      else if(heightRatio>.82) position.setY(i,y-(heightRatio-.82)*height*.18);
     }
     position.needsUpdate=true;
     geometry.computeVertexNormals();
@@ -432,7 +435,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=7;
+  state.layoutVersion=8;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -475,11 +478,13 @@ function loadPlan3(){
   });
   const cabinetHandles=state.objects.filter(o=>o.material==='black'&&o.size[0]===80&&o.size[1]===18&&o.size[2]===18);
   cabinetHandles.forEach(handle=>{
+    handle.size=[18,80,18];
     handle.pos[1]=310;
     const door=cabinetDoors.find(item=>item.pos[0]===handle.pos[0]&&item.pos[2]>cabinetZ);
     if(!door)return;
     const angle=door.openRot[1];
     const hingeSide=door.pos[0]<0?-1:1;
+    handle.pos[0]=door.pos[0]-hingeSide*(doorWidth/2-35);
     const hingeX=door.pos[0]+hingeSide*doorWidth/2;
     const dx=handle.pos[0]-hingeX;
     const dz=handle.pos[2]-door.pos[2];
@@ -547,4 +552,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==7) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==8) loadPlan3();
