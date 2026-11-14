@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
-const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x6c4935, black: 0x282b29, fabric: 0xc8b9a3, screen: 0x24343d, white: 0xe8e7e2 };
+const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, black: 0x282b29, fabric: 0xc8b9a3, screen: 0x24343d, white: 0xe8e7e2 };
 const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', black: '블랙 코팅', fabric: '베이지 쿠션', screen: '모니터 화면', white: '화이트 기기' };
 const presets = {
   floor: { name: '바닥 판', size: [1200, 18, 900], pos: [0, 40, 0] },
@@ -139,7 +139,7 @@ function updatePerson(){
   const pose=state.personPose||{position:[0,0,0],rotationY:0};
   personGroup.position.set(...pose.position.map(v=>v/1000));
   personGroup.rotation.set(0,THREE.MathUtils.degToRad(pose.rotationY||0),0);
-  personGroup.visible=state.person;
+  personGroup.visible=state.person&&!state.storageOpen;
 }
 
 function setPersonPose(position,rotationY,rightElbowToCabinet=false){
@@ -223,7 +223,7 @@ function makeMesh(obj){
   const pos=state.storageOpen&&obj.openPos?obj.openPos:obj.pos;
   const rot=state.storageOpen&&obj.openRot?obj.openRot:obj.rot;
   mesh.position.set(pos[0]/1000,pos[1]/1000,pos[2]/1000); mesh.rotation.set(...rot.map(THREE.MathUtils.degToRad));
-  mesh.visible=!(state.storageOpen&&obj.hideWhenStorageOpen)&&!(!state.storageOpen&&obj.showOnlyWhenStorageOpen);
+  mesh.visible=!(state.storageOpen&&obj.hideWhenStorageOpen)&&!(!state.storageOpen&&obj.showOnlyWhenStorageOpen)&&!(state.storageOpen&&obj.material==='fabric');
   scene.add(mesh); meshes.set(obj.id,mesh); return mesh;
 }
 function rebuildObjects(){ meshes.forEach(m=>scene.remove(m)); meshes.clear(); state.objects.forEach(makeMesh); renderObjectList(); selectObject(state.selectedId,false); updateSummary(); }
@@ -432,7 +432,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=4;
+  state.layoutVersion=5;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -463,6 +463,16 @@ function loadPlan3(){
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 두 번째 빈백 쿠션 · 480 × 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
   );
+  const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20));
+  cabinetDoors.forEach(door=>{
+    const hingeSide=door.pos[0]<0?-1:1;
+    const outward=door.pos[2]>cabinetZ?1:-1;
+    const angle=outward*hingeSide*75;
+    const hingeX=door.pos[0]+hingeSide*doorWidth/2;
+    const centerFromHinge=-hingeSide*doorWidth/2;
+    door.openPos=[hingeX+Math.cos(THREE.MathUtils.degToRad(angle))*centerFromHinge,door.pos[1],door.pos[2]-Math.sin(THREE.MathUtils.degToRad(angle))*centerFromHinge];
+    door.openRot=[0,angle,0];
+  });
   const ps5=state.objects.find(o=>o.size[0]===104&&o.size[1]===390&&o.size[2]===260);
   if(ps5){
     ps5.name='중간 선반 위에 눕힌 흰색 PS5';
@@ -514,7 +524,7 @@ document.querySelectorAll('[data-material]').forEach(b=>b.addEventListener('clic
 $('deleteObject').addEventListener('click',deleteSelected);$('duplicateObject').addEventListener('click',duplicateSelected);$('centerObject').addEventListener('click',()=>{const o=selected();if(!o)return;o.pos[0]=0;o.pos[2]=0;syncMesh(o);});
 $('toggleShell').addEventListener('change',e=>{state.shell=e.target.checked;cargoGroup.visible=state.shell;saveLocal();});$('toggleGrid').addEventListener('change',e=>{state.grid=e.target.checked;grid.visible=state.grid;saveLocal();});
 $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;updatePerson();saveLocal();});
-$('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();saveLocal();});
+$('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> 설계를 저장했습니다';setTimeout(saveLocal,1800);});
 $('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
 $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle('collapsed');$('cargoToggle').classList.toggle('closed');});
@@ -523,4 +533,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==4) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==5) loadPlan3();
