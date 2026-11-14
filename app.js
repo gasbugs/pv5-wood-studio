@@ -440,7 +440,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=15;
+  state.layoutVersion=16;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -544,7 +544,7 @@ function loadPlan3(){
   const frontHatchZ=bedZ-(halfHatchDepth+splitGap)/2;
   const rearHatchZ=bedZ+(halfHatchDepth+splitGap)/2;
   const hatchObjects=[
-    makeSideHatch(crateXs[0],hatchWidth,1,'운전석 쪽 침상 대형 수납 상판'),
+    makeSideHatch(crateXs[0],hatchWidth,-1,'운전석 쪽 침상 대형 수납 상판'),
     makeLengthHatch(frontHatchZ,-1,'중앙 침상 운전석 방향 절반 상판'),
     makeLengthHatch(rearHatchZ,1,'중앙 침상 트렁크 방향 절반 상판')
   ];
@@ -582,4 +582,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==15) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==16) loadPlan3();
