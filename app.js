@@ -130,7 +130,7 @@ function buildPerson(){
     personGroup.add(limbBetween([side*.15,.93,.015],[elbowX,.73,.17],.047,shirt));
     personGroup.add(limbBetween([elbowX,.73,.17],[side*.17,.67,.34],.04,skin));
   }
-  const label=makeLabel('163cm'); label.position.set(0,1.43,0); label.scale.set(.38,.11,1); personGroup.add(label);
+  const label=makeLabel('사람'); label.position.set(0,1.43,0); label.scale.set(.38,.11,1); personGroup.add(label);
   scene.add(personGroup);
 }
 
@@ -432,7 +432,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=5;
+  state.layoutVersion=7;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -463,7 +463,7 @@ function loadPlan3(){
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 두 번째 빈백 쿠션 · 480 × 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
   );
-  const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20));
+  const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20)&&o.pos[2]>cabinetZ);
   cabinetDoors.forEach(door=>{
     const hingeSide=door.pos[0]<0?-1:1;
     const outward=door.pos[2]>cabinetZ?1:-1;
@@ -473,6 +473,20 @@ function loadPlan3(){
     door.openPos=[hingeX+Math.cos(THREE.MathUtils.degToRad(angle))*centerFromHinge,door.pos[1],door.pos[2]-Math.sin(THREE.MathUtils.degToRad(angle))*centerFromHinge];
     door.openRot=[0,angle,0];
   });
+  const cabinetHandles=state.objects.filter(o=>o.material==='black'&&o.size[0]===80&&o.size[1]===18&&o.size[2]===18);
+  cabinetHandles.forEach(handle=>{
+    handle.pos[1]=310;
+    const door=cabinetDoors.find(item=>item.pos[0]===handle.pos[0]&&item.pos[2]>cabinetZ);
+    if(!door)return;
+    const angle=door.openRot[1];
+    const hingeSide=door.pos[0]<0?-1:1;
+    const hingeX=door.pos[0]+hingeSide*doorWidth/2;
+    const dx=handle.pos[0]-hingeX;
+    const dz=handle.pos[2]-door.pos[2];
+    const radians=THREE.MathUtils.degToRad(angle);
+    handle.openPos=[hingeX+Math.cos(radians)*dx+Math.sin(radians)*dz,handle.pos[1],door.pos[2]-Math.sin(radians)*dx+Math.cos(radians)*dz];
+    handle.openRot=[0,angle,0];
+  });
   const ps5=state.objects.find(o=>o.size[0]===104&&o.size[1]===390&&o.size[2]===260);
   if(ps5){
     ps5.name='중간 선반 위에 눕힌 흰색 PS5';
@@ -480,7 +494,7 @@ function loadPlan3(){
     ps5.pos=[doorStep,377,cabinetZ];
   }
   state.objects=state.objects.filter(o=>!(o.size[0]===18&&o.size[1]===360&&o.size[2]===270));
-  state.objects.push({id:uid(),name:'오른쪽 수납함 중간 나무 선반',size:[doorWidth,30,cabinetDepth-30],pos:[doorStep,310,cabinetZ],rot:[0,0,0],material:'oak'});
+  [-doorStep,0,doorStep].forEach((x,i)=>state.objects.push({id:uid(),name:`${['왼쪽','가운데','오른쪽'][i]} 수납함 중간 나무 선반`,size:[doorWidth,30,cabinetDepth-30],pos:[x,310,cabinetZ],rot:[0,0,0],material:'oak'}));
   const bedLeft=bedFrame.pos[0]-bedFrame.size[0]/2;
   const bayWidth=(bedFrame.size[0]-bedCenterSupport.size[0])/2;
   const crateXs=[bedLeft+bayWidth/2,bedFrame.pos[0]+bedCenterSupport.size[0]/2+bayWidth/2];
@@ -533,4 +547,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==5) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==7) loadPlan3();
