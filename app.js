@@ -47,19 +47,73 @@ function rebuildCargo(){
   const interiorMat=new THREE.MeshStandardMaterial({color:0x7f8983,roughness:.88,metalness:.08});
   const deckMat=new THREE.MeshStandardMaterial({color:0xa87543,roughness:.72});
   const caulkMat=new THREE.MeshStandardMaterial({color:0x2f332f,roughness:.9});
-  // 참고 모델에서 보이는 좌우 휠하우스를 가벼운 반원통으로 재현한다.
+  // 실차 형상처럼 낮은 전후 받침부와 타원형 휠 아치가 한 몸으로 이어지도록 만든다.
   const clearWheelhouseWidth=Math.min(w-.02,(state.cargo.wheelhouseWidth||1330)/1000);
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
-  for(const x of [-wheelhouseX,wheelhouseX]){
-    const arch=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,wheelhouseDepth,48),interiorMat);
-    // 1,330mm 내측 폭은 유지하고 원형 휠하우스의 아래쪽 절반은 적재함 바닥 아래로 숨긴다.
-    arch.scale.set(1.6,1,1.6);
-    arch.rotation.z=Math.PI/2;
-    arch.position.set(x,.015,l*.22);
-    arch.castShadow=true;
-    cargoGroup.add(arch);
+  const wheelhouseShape=new THREE.Shape();
+  const baseHalfLength=.58,shoulderHalfLength=.49,archHalfLength=.40;
+  const shoulderHeight=.17,archRise=.22;
+  wheelhouseShape.moveTo(-baseHalfLength,0);
+  wheelhouseShape.lineTo(-baseHalfLength,.08);
+  wheelhouseShape.lineTo(-shoulderHalfLength,shoulderHeight);
+  wheelhouseShape.lineTo(-archHalfLength,shoulderHeight);
+  for(let i=0;i<=16;i++){
+    const t=Math.PI-i*Math.PI/16;
+    wheelhouseShape.lineTo(Math.cos(t)*archHalfLength,shoulderHeight+Math.sin(t)*archRise);
   }
+  wheelhouseShape.lineTo(shoulderHalfLength,shoulderHeight);
+  wheelhouseShape.lineTo(baseHalfLength,.08);
+  wheelhouseShape.lineTo(baseHalfLength,0);
+  wheelhouseShape.closePath();
+  const wheelhouseGeo=new THREE.ExtrudeGeometry(wheelhouseShape,{depth:wheelhouseDepth,bevelEnabled:false,curveSegments:12});
+  wheelhouseGeo.translate(0,0,-wheelhouseDepth/2);
+  const wheelhouseEdgeMat=new THREE.LineBasicMaterial({color:0x505955,transparent:true,opacity:.55});
+  for(const x of [-wheelhouseX,wheelhouseX]){
+    const wheelhouse=new THREE.Mesh(wheelhouseGeo,interiorMat);
+    wheelhouse.rotation.y=Math.PI/2;
+    wheelhouse.position.set(x,.015,l*.22);
+    wheelhouse.castShadow=true;
+    wheelhouse.receiveShadow=true;
+    cargoGroup.add(wheelhouse);
+    const wheelhouseEdges=new THREE.LineSegments(new THREE.EdgesGeometry(wheelhouseGeo,28),wheelhouseEdgeMat);
+    wheelhouseEdges.rotation.copy(wheelhouse.rotation);
+    wheelhouseEdges.position.copy(wheelhouse.position);
+    cargoGroup.add(wheelhouseEdges);
+  }
+  // 후면 개구부는 실차처럼 상단이 둥글고 하단 모서리가 안쪽으로 좁아지는 문틀로 표현한다.
+  const rearOpeningHalf=Math.min((w-.08)/2,.6715);
+  const rearOpeningBottomHalf=Math.max(.50,rearOpeningHalf-.095);
+  const rearOpeningBottom=.035;
+  const rearOpeningTop=Math.min(h-.06,1.45);
+  const rearFrameShape=new THREE.Shape();
+  rearFrameShape.moveTo(-w/2,0);
+  rearFrameShape.lineTo(w/2,0);
+  rearFrameShape.lineTo(w/2,h);
+  rearFrameShape.lineTo(-w/2,h);
+  rearFrameShape.closePath();
+  const rearOpening=new THREE.Path();
+  rearOpening.moveTo(-rearOpeningBottomHalf,rearOpeningBottom);
+  rearOpening.quadraticCurveTo(-rearOpeningHalf,rearOpeningBottom,-rearOpeningHalf,rearOpeningBottom+.12);
+  rearOpening.lineTo(-rearOpeningHalf,rearOpeningTop-.13);
+  rearOpening.quadraticCurveTo(-rearOpeningHalf,rearOpeningTop,-rearOpeningHalf+.13,rearOpeningTop);
+  rearOpening.lineTo(rearOpeningHalf-.13,rearOpeningTop);
+  rearOpening.quadraticCurveTo(rearOpeningHalf,rearOpeningTop,rearOpeningHalf,rearOpeningTop-.13);
+  rearOpening.lineTo(rearOpeningHalf,rearOpeningBottom+.12);
+  rearOpening.quadraticCurveTo(rearOpeningHalf,rearOpeningBottom,rearOpeningBottomHalf,rearOpeningBottom);
+  rearOpening.lineTo(-rearOpeningBottomHalf,rearOpeningBottom);
+  rearOpening.closePath();
+  rearFrameShape.holes.push(rearOpening);
+  const rearFrameGeo=new THREE.ExtrudeGeometry(rearFrameShape,{depth:.045,bevelEnabled:false,curveSegments:16});
+  rearFrameGeo.translate(0,0,-.0225);
+  const rearFrameMat=new THREE.MeshStandardMaterial({color:0x707a75,roughness:.84,metalness:.06,transparent:true,opacity:.48,side:THREE.DoubleSide});
+  const rearFrame=new THREE.Mesh(rearFrameGeo,rearFrameMat);
+  rearFrame.position.set(0,0,l/2-.018);
+  rearFrame.castShadow=true;
+  cargoGroup.add(rearFrame);
+  const rearFrameEdges=new THREE.LineSegments(new THREE.EdgesGeometry(rearFrameGeo,24),edgeMat);
+  rearFrameEdges.position.copy(rearFrame.position);
+  cargoGroup.add(rearFrameEdges);
   // 카고 바닥의 세로 골은 가구 간섭을 확인할 수 있을 정도만 표현한다.
   const deck=new THREE.Mesh(new THREE.BoxGeometry(w-.05,.025,l-.05),deckMat); deck.position.y=.013; deck.receiveShadow=true; cargoGroup.add(deck);
   for(let x=-w/2+.12;x<w/2-.05;x+=.14){
