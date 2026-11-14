@@ -510,3 +510,5 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 ['cargoLength','cargoWidth','wheelhouseWidth','cargoHeight','unitCost'].forEach(id=>$(id).addEventListener('change',()=>{state.cargo.length=Math.max(500,Number($('cargoLength').value)||2255);state.cargo.width=Math.max(500,Number($('cargoWidth').value)||1565);state.cargo.wheelhouseWidth=Math.min(state.cargo.width,Math.max(500,Number($('wheelhouseWidth').value)||1330));state.cargo.height=Math.max(500,Number($('cargoHeight').value)||1520);state.unitCost=Math.max(0,Number($('unitCost').value)||0);syncSettingsUI();rebuildCargo();updateSummary();selectObject(state.selectedId);saveLocal();}));
 
 loadLocal(); syncSettingsUI(); initThree();
+// Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
+if(state.objects.some(o=>o.size[0]===104&&o.size[1]===390&&o.size[2]===260)) loadPlan3();
