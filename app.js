@@ -150,7 +150,7 @@ function setPersonPose(position,rotationY,rightElbowToCabinet=false){
 
 function panelMaterial(kind){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:kind==='fabric'?.92:.62,metalness:0}); }
 function geometryFor(obj){
-  if(obj.shape==='rounded-opening'){
+  if(obj.shape==='rounded-opening'||obj.shape==='double-rounded-opening'){
     const width=obj.size[0]/1000;
     const height=obj.size[1]/1000;
     const depth=obj.size[2]/1000;
@@ -166,17 +166,25 @@ function geometryFor(obj){
     const right=width/2-inset;
     const bottom=-height/2+inset;
     const top=height/2-inset;
-    const hole=new THREE.Path();
-    hole.moveTo(left+radius,bottom);
-    hole.lineTo(right-radius,bottom);
-    hole.quadraticCurveTo(right,bottom,right,bottom+radius);
-    hole.lineTo(right,top-radius);
-    hole.quadraticCurveTo(right,top,right-radius,top);
-    hole.lineTo(left+radius,top);
-    hole.quadraticCurveTo(left,top,left,top-radius);
-    hole.lineTo(left,bottom+radius);
-    hole.quadraticCurveTo(left,bottom,left+radius,bottom);
-    shape.holes.push(hole);
+    const addRoundedHole=(holeBottom,holeTop)=>{
+      const holeRadius=Math.min(radius,(right-left)/2,(holeTop-holeBottom)/2);
+      const hole=new THREE.Path();
+      hole.moveTo(left+holeRadius,holeBottom);
+      hole.lineTo(right-holeRadius,holeBottom);
+      hole.quadraticCurveTo(right,holeBottom,right,holeBottom+holeRadius);
+      hole.lineTo(right,holeTop-holeRadius);
+      hole.quadraticCurveTo(right,holeTop,right-holeRadius,holeTop);
+      hole.lineTo(left+holeRadius,holeTop);
+      hole.quadraticCurveTo(left,holeTop,left,holeTop-holeRadius);
+      hole.lineTo(left,holeBottom+holeRadius);
+      hole.quadraticCurveTo(left,holeBottom,left+holeRadius,holeBottom);
+      shape.holes.push(hole);
+    };
+    if(obj.shape==='double-rounded-opening'){
+      const centerGap=(obj.centerGap||36)/1000;
+      addRoundedHole(bottom,-centerGap/2);
+      addRoundedHole(centerGap/2,top);
+    }else addRoundedHole(bottom,top);
     const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:10});
     geometry.translate(0,0,-depth/2);
     geometry.computeVertexNormals();
@@ -432,7 +440,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=9;
+  state.layoutVersion=11;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -461,8 +469,9 @@ function loadPlan3(){
     {id:uid(),name:'노트북 스탠드 높이 지지대',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
     {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
-    {id:uid(),name:'침상 대형 빈백 쿠션 · 600 × 600mm',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
+    {id:uid(),name:'침상 대형 빈백 쿠션 · 사람 방향',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,-155,0],material:'fabric',shape:'beanbag'}
   );
+  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===560&&o.size[2]===20).forEach(panel=>{panel.shape='double-rounded-opening';panel.centerGap=36;});
   const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20)&&o.pos[2]>cabinetZ);
   cabinetDoors.forEach(door=>{
     const hingeSide=door.pos[0]<0?-1:1;
@@ -549,4 +558,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==9) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==11) loadPlan3();
