@@ -3,12 +3,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
 const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x6c4935, black: 0x282b29, fabric: 0xc8b9a3, screen: 0x24343d, white: 0xe8e7e2 };
-const materialLabels = { birch: '���� ����', oak: '��ũ', walnut: '����', black: '���� ����', fabric: '������ ����', screen: '����� ȭ��', white: 'ȭ��Ʈ ���' };
+const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', black: '블랙 코팅', fabric: '베이지 쿠션', screen: '모니터 화면', white: '화이트 기기' };
 const presets = {
-  floor: { name: '�ٴ� ��', size: [1200, 18, 900], pos: [0, 40, 0] },
-  wall: { name: '���� ĭ����', size: [18, 700, 900], pos: [-450, 370, 0] },
-  shelf: { name: '����', size: [900, 18, 350], pos: [0, 650, 250] },
-  bench: { name: '��ġ ����', size: [1100, 24, 550], pos: [0, 430, -350] }
+  floor: { name: '바닥 판', size: [1200, 18, 900], pos: [0, 40, 0] },
+  wall: { name: '세로 칸막이', size: [18, 700, 900], pos: [-450, 370, 0] },
+  shelf: { name: '선반', size: [900, 18, 350], pos: [0, 650, 250] },
+  bench: { name: '벤치 상판', size: [1100, 24, 550], pos: [0, 430, -350] }
 };
 const state = {
   cargo: { width: 1565, height: 1520, length: 2255, wheelhouseWidth: 1330 }, unitCost: 65000,
@@ -19,9 +19,9 @@ let renderer, scene, camera, controls, raycaster, pointer, cargoGroup, grid, sel
 const meshes = new Map();
 
 function uid(){ return `panel-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`; }
-function saveLocal(){ localStorage.setItem('pv5-wood-studio', JSON.stringify(state)); $('saveState').innerHTML='<i></i> �� �������� �ڵ� �����'; }
-function loadLocal(){ try { const raw=localStorage.getItem('pv5-wood-studio'); if(raw) Object.assign(state, JSON.parse(raw)); state.cargo.wheelhouseWidth=Number(state.cargo.wheelhouseWidth)||1330; if(typeof state.person!=='boolean')state.person=true; if(typeof state.storageOpen!=='boolean')state.storageOpen=false; if(!state.personPose)state.personPose={position:[0,0,0],rotationY:0}; } catch(e){ console.warn('����� ���踦 �ҷ����� ���߽��ϴ�.', e); } }
-function formatWon(v){ return `${Math.round(v).toLocaleString('ko-KR')}��`; }
+function saveLocal(){ localStorage.setItem('pv5-wood-studio', JSON.stringify(state)); $('saveState').innerHTML='<i></i> 이 브라우저에 자동 저장됨'; }
+function loadLocal(){ try { const raw=localStorage.getItem('pv5-wood-studio'); if(raw) Object.assign(state, JSON.parse(raw)); state.cargo.wheelhouseWidth=Number(state.cargo.wheelhouseWidth)||1330; if(typeof state.person!=='boolean')state.person=true; if(typeof state.storageOpen!=='boolean')state.storageOpen=false; if(!state.personPose)state.personPose={position:[0,0,0],rotationY:0}; } catch(e){ console.warn('저장된 설계를 불러오지 못했습니다.', e); } }
+function formatWon(v){ return `${Math.round(v).toLocaleString('ko-KR')}원`; }
 function areaOf(o){ const s=o.size; const dims=[s[0]*s[1],s[0]*s[2],s[1]*s[2]].sort((a,b)=>b-a); return dims[0]/1e6; }
 
 function initThree(){
@@ -47,20 +47,20 @@ function rebuildCargo(){
   const interiorMat=new THREE.MeshStandardMaterial({color:0x7f8983,roughness:.88,metalness:.08});
   const deckMat=new THREE.MeshStandardMaterial({color:0xa87543,roughness:.72});
   const caulkMat=new THREE.MeshStandardMaterial({color:0x2f332f,roughness:.9});
-  // ���� �𵨿��� ���̴� �¿� ���Ͽ콺�� ������ �ݿ������� �����Ѵ�.
+  // 참고 모델에서 보이는 좌우 휠하우스를 가벼운 반원통으로 재현한다.
   const clearWheelhouseWidth=Math.min(w-.02,(state.cargo.wheelhouseWidth||1330)/1000);
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
   for(const x of [-wheelhouseX,wheelhouseX]){
     const arch=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,wheelhouseDepth,48),interiorMat);
-    // 1,330mm ���� ���� �����ϸ鼭 ���� ���Ͽ콺ó�� ���� �յڷ� �� ��ġ ������ �����.
+    // 1,330mm 내측 폭을 유지하면서 실제 휠하우스처럼 낮고 앞뒤로 긴 아치 비율을 만든다.
     arch.scale.set(.86,1,1.6);
     arch.rotation.z=Math.PI/2;
     arch.position.set(x,.17,l*.22);
     arch.castShadow=true;
     cargoGroup.add(arch);
   }
-  // ī�� �ٴ��� ���� ���� ���� ������ Ȯ���� �� ���� ������ ǥ���Ѵ�.
+  // 카고 바닥의 세로 골은 가구 간섭을 확인할 수 있을 정도만 표현한다.
   const deck=new THREE.Mesh(new THREE.BoxGeometry(w-.05,.025,l-.05),deckMat); deck.position.y=.013; deck.receiveShadow=true; cargoGroup.add(deck);
   for(let x=-w/2+.12;x<w/2-.05;x+=.14){
     const seam=new THREE.Mesh(new THREE.BoxGeometry(.009,.005,l-.08),caulkMat); seam.position.set(x,.028,0); cargoGroup.add(seam);
@@ -72,7 +72,7 @@ function rebuildCargo(){
   addCabReference(cargoGroup,w,h,l);
   scene.add(cargoGroup);
   if(grid) scene.remove(grid); grid=new THREE.GridHelper(Math.max(w,l)*1.25,Math.round(Math.max(w,l)*20),0x8c978f,0xc6ccc6); grid.position.y=.032; grid.visible=state.grid; scene.add(grid);
-  $('cargoSummary').textContent=`${state.cargo.length.toLocaleString()} �� ${state.cargo.width.toLocaleString()} �� ${state.cargo.height.toLocaleString()} mm �� ���Ͽ콺 ${state.cargo.wheelhouseWidth.toLocaleString()} mm`;
+  $('cargoSummary').textContent=`${state.cargo.length.toLocaleString()} × ${state.cargo.width.toLocaleString()} × ${state.cargo.height.toLocaleString()} mm · 휠하우스 ${state.cargo.wheelhouseWidth.toLocaleString()} mm`;
 }
 
 function addCabReference(group,w,h,l){
@@ -88,7 +88,7 @@ function addCabReference(group,w,h,l){
     const back=new THREE.Mesh(new THREE.BoxGeometry(.46,.58,.13),mat); back.position.set(x,.74,z+.19); back.rotation.x=-.08; back.castShadow=true; group.add(back);
     if(driver){
       const wheel=new THREE.Mesh(new THREE.TorusGeometry(.16,.018,10,30),new THREE.MeshStandardMaterial({color:0x202522,roughness:.8})); wheel.position.set(x,.82,-l/2-.70); wheel.rotation.x=.18; group.add(wheel);
-      const label=makeLabel('������'); label.position.set(x,1.14,z); group.add(label);
+      const label=makeLabel('운전석'); label.position.set(x,1.14,z); group.add(label);
     }
   };
   addSeat(-w*.27,true); addSeat(w*.27,false);
@@ -233,22 +233,22 @@ function addObject(type){ const p=presets[type]; const count=state.objects.filte
 function selectObject(id,save=true){ state.selectedId=state.objects.some(o=>o.id===id)?id:null; const obj=selected(); document.querySelectorAll('.object-item').forEach(el=>el.classList.toggle('active',el.dataset.id===state.selectedId)); if(obj){ $('emptyInspector').classList.add('hidden');$('inspector').classList.remove('hidden'); fillInspector(obj); const mesh=meshes.get(obj.id); selectionBox.setFromObject(mesh);selectionBox.visible=true; checkBounds(obj); }else{$('emptyInspector').classList.remove('hidden');$('inspector').classList.add('hidden');selectionBox.visible=false;$('boundaryWarning').classList.remove('show');} if(save)saveLocal(); }
 function selected(){ return state.objects.find(o=>o.id===state.selectedId); }
 function deleteSelected(){ if(!state.selectedId)return; const mesh=meshes.get(state.selectedId);if(mesh)scene.remove(mesh);meshes.delete(state.selectedId);state.objects=state.objects.filter(o=>o.id!==state.selectedId);state.selectedId=null;renderObjectList();selectObject(null);updateSummary();saveLocal(); }
-function duplicateSelected(){ const o=selected();if(!o)return;const c=structuredClone(o);c.id=uid();c.name=`${o.name} ����`;c.pos[0]+=50;c.pos[2]+=50;state.objects.push(c);makeMesh(c);renderObjectList();selectObject(c.id);updateSummary();saveLocal(); }
+function duplicateSelected(){ const o=selected();if(!o)return;const c=structuredClone(o);c.id=uid();c.name=`${o.name} 복사`;c.pos[0]+=50;c.pos[2]+=50;state.objects.push(c);makeMesh(c);renderObjectList();selectObject(c.id);updateSummary();saveLocal(); }
 
 function renderObjectList(){
-  const list=$('objectList'); $('pieceCount').textContent=`${state.objects.length}��`;
-  if(!state.objects.length){list.innerHTML='<div class="empty-list">���� ��ġ�� ���簡 �����ϴ�.</div>';return;}
-  list.innerHTML=state.objects.map(o=>`<div class="object-item ${o.id===state.selectedId?'active':''}" data-id="${o.id}"><i style="background:#${materialColors[o.material].toString(16).padStart(6,'0')}"></i><span><b>${escapeHtml(o.name)}</b><small>${o.size.join(' �� ')} mm</small></span><em>?</em></div>`).join('');
+  const list=$('objectList'); $('pieceCount').textContent=`${state.objects.length}개`;
+  if(!state.objects.length){list.innerHTML='<div class="empty-list">아직 설치한 판재가 없습니다.</div>';return;}
+  list.innerHTML=state.objects.map(o=>`<div class="object-item ${o.id===state.selectedId?'active':''}" data-id="${o.id}"><i style="background:#${materialColors[o.material].toString(16).padStart(6,'0')}"></i><span><b>${escapeHtml(o.name)}</b><small>${o.size.join(' × ')} mm</small></span><em>›</em></div>`).join('');
   list.querySelectorAll('.object-item').forEach(el=>el.addEventListener('click',()=>selectObject(el.dataset.id)));
 }
 function escapeHtml(v){ const d=document.createElement('div');d.textContent=v;return d.innerHTML; }
 function fillInspector(o){
   $('propName').value=o.name; ['sizeX','sizeY','sizeZ'].forEach((id,i)=>$(id).value=o.size[i]); ['posX','posY','posZ'].forEach((id,i)=>$(id).value=o.pos[i]);
-  document.querySelectorAll('.swatches button').forEach(b=>b.classList.toggle('active',b.dataset.material===o.material)); $('materialName').textContent=materialLabels[o.material]; const a=areaOf(o);$('selectedArea').textContent=`${a.toFixed(2)} m��`;$('selectedCost').textContent=formatWon(a*state.unitCost);
+  document.querySelectorAll('.swatches button').forEach(b=>b.classList.toggle('active',b.dataset.material===o.material)); $('materialName').textContent=materialLabels[o.material]; const a=areaOf(o);$('selectedArea').textContent=`${a.toFixed(2)} m²`;$('selectedCost').textContent=formatWon(a*state.unitCost);
 }
-function updateFromInspector(){ const o=selected();if(!o)return;o.name=$('propName').value.trim()||'�̸� ���� ����';o.size=[$('sizeX'),$('sizeY'),$('sizeZ')].map(e=>Math.max(18,Number(e.value)||18));o.pos=[$('posX'),$('posY'),$('posZ')].map(e=>Number(e.value)||0);syncMesh(o); }
+function updateFromInspector(){ const o=selected();if(!o)return;o.name=$('propName').value.trim()||'이름 없는 판재';o.size=[$('sizeX'),$('sizeY'),$('sizeZ')].map(e=>Math.max(18,Number(e.value)||18));o.pos=[$('posX'),$('posY'),$('posZ')].map(e=>Number(e.value)||0);syncMesh(o); }
 function checkBounds(o){ const half=[state.cargo.width/2,state.cargo.height,state.cargo.length/2]; const x=Math.abs(o.pos[0])+o.size[0]/2>half[0], y=o.pos[1]-o.size[1]/2<0||o.pos[1]+o.size[1]/2>half[1], z=Math.abs(o.pos[2])+o.size[2]/2>half[2]; $('boundaryWarning').classList.toggle('show',x||y||z); }
-function updateSummary(){ const area=state.objects.reduce((s,o)=>s+areaOf(o),0);$('areaSummary').textContent=`${area.toFixed(2)} m��`;$('costSummary').textContent=formatWon(area*state.unitCost);const o=selected();if(o)fillInspector(o); }
+function updateSummary(){ const area=state.objects.reduce((s,o)=>s+areaOf(o),0);$('areaSummary').textContent=`${area.toFixed(2)} m²`;$('costSummary').textContent=formatWon(area*state.unitCost);const o=selected();if(o)fillInspector(o); }
 
 function pickObject(ev){ if(ev.button!==0)return; const rect=renderer.domElement.getBoundingClientRect();pointer.x=((ev.clientX-rect.left)/rect.width)*2-1;pointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects([...meshes.values()],false);if(hits.length)selectObject(hits[0].object.userData.id); }
 function setView(name){ const target=controls.target; const views={perspective:[3.2,2.7,4.2],top:[0,5.6,.001],side:[4.8,1.1,.001],rear:[.001,1.2,5]};camera.position.set(...views[name]);controls.target.set(0,.65,0);camera.up.set(0,1,0);controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name)); }
@@ -266,16 +266,16 @@ function sideDeskDevices(desk,deskInnerX){
   const armLength=armPoleX-(armPlateX+15);
   const armX=armPlateX+15+armLength/2;
   return [
-    {id:uid(),name:'å�� ���� 27��ġ ����� ��ü �� 620 �� 380mm',size:[32,380,620],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'27��ġ ����� ȭ�� �� ���� �¼� ����',size:[5,350,590],pos:[monitorX-18.5,monitorY,monitorZ],rot:[0,0,0],material:'screen'},
-    {id:uid(),name:'����;� VESA ������',size:[30,110,110],pos:[armPlateX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ����',size:[armLength,30,30],pos:[armX,940,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ���',size:[35,255,35],pos:[armPoleX,812.5,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� å�� Ŭ����',size:[80,35,90],pos:[armPoleX,667.5,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'å�� ������ ��Ʈ�� ���ĵ� ��ħ',size:[250,20,300],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'��Ʈ�� ���ĵ� ���� ������',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'���ĵ� �� 15��ġ ��Ʈ�� ��ü',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
-    {id:uid(),name:'��Ʈ�� ȭ�� �� ���� �¼� ����',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'}
+    {id:uid(),name:'책상 왼쪽 27인치 모니터 본체 · 620 × 380mm',size:[32,380,620],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'27인치 모니터 화면 · 좌측 좌석 방향',size:[5,350,590],pos:[monitorX-18.5,monitorY,monitorZ],rot:[0,0,0],material:'screen'},
+    {id:uid(),name:'모니터암 VESA 결합판',size:[30,110,110],pos:[armPlateX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수평 관절',size:[armLength,30,30],pos:[armX,940,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수직 기둥',size:[35,255,35],pos:[armPoleX,812.5,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 책상 클램프',size:[80,35,90],pos:[armPoleX,667.5,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'책상 오른쪽 노트북 스탠드 받침',size:[250,20,300],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'노트북 스탠드 높이 지지대',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
+    {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'}
   ];
 }
 
@@ -290,16 +290,16 @@ function rearDeskDevices(desk){
   const laptopX=desk.size[0]/4;
   const laptopZ=desk.pos[2]-50;
   return [
-    {id:uid(),name:'å�� ���� 27��ġ ����� ��ü �� 620 �� 380mm',size:[620,380,32],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'27��ġ ����� ȭ�� �� ħ�� �¼� ����',size:[590,350,5],pos:[monitorX,monitorY,monitorZ-18.5],rot:[0,0,0],material:'screen'},
-    {id:uid(),name:'����;� VESA ������',size:[110,110,30],pos:[monitorX,monitorY,armPlateZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ����',size:[30,30,armLength],pos:[monitorX,940,armZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ���',size:[35,255,35],pos:[monitorX,812.5,armPoleZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� å�� Ŭ����',size:[90,35,80],pos:[monitorX,667.5,armPoleZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'å�� ������ ��Ʈ�� ���ĵ� ��ħ',size:[300,20,250],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'��Ʈ�� ���ĵ� ���� ������',size:[80,150,30],pos:[laptopX,745,laptopZ+80],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'���ĵ� �� 15��ġ ��Ʈ�� ��ü',size:[340,230,24],pos:[laptopX,815,laptopZ+40],rot:[-12,0,0],material:'black'},
-    {id:uid(),name:'��Ʈ�� ȭ�� �� ħ�� �¼� ����',size:[315,205,5],pos:[laptopX,815,laptopZ+25],rot:[-12,0,0],material:'screen'}
+    {id:uid(),name:'책상 왼쪽 27인치 모니터 본체 · 620 × 380mm',size:[620,380,32],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'27인치 모니터 화면 · 침상 좌석 방향',size:[590,350,5],pos:[monitorX,monitorY,monitorZ-18.5],rot:[0,0,0],material:'screen'},
+    {id:uid(),name:'모니터암 VESA 결합판',size:[110,110,30],pos:[monitorX,monitorY,armPlateZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수평 관절',size:[30,30,armLength],pos:[monitorX,940,armZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수직 기둥',size:[35,255,35],pos:[monitorX,812.5,armPoleZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 책상 클램프',size:[90,35,80],pos:[monitorX,667.5,armPoleZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'책상 오른쪽 노트북 스탠드 받침',size:[300,20,250],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'노트북 스탠드 높이 지지대',size:[80,150,30],pos:[laptopX,745,laptopZ+80],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[340,230,24],pos:[laptopX,815,laptopZ+40],rot:[-12,0,0],material:'black'},
+    {id:uid(),name:'노트북 화면 · 침상 좌석 방향',size:[315,205,5],pos:[laptopX,815,laptopZ+25],rot:[-12,0,0],material:'screen'}
   ];
 }
 
@@ -316,20 +316,20 @@ function loadPlan1(){
   const rightAccessWidth=500;
   const bedWidth=state.cargo.width-rightAccessWidth;
   const bedX=-rightAccessWidth/2;
-  state.layoutName='1�� �� �ĸ� å�� + ���� 500mm ���';
+  state.layoutName='1안 · 후면 책상 + 우측 500mm 통로';
   state.objects=[
-    {id:uid(),name:'�ĸ� ��ü �� å�� ���� �� ���� 700mm �� ���� 650mm',size:[deskWidth,30,deskDepth],pos:[0,635,deskZ],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'å�� ���� �� ���� ������',size:[60,595,600],pos:[-deskWidth/2+30,322.5,deskZ+50],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'å�� ������ �� ���� ������',size:[60,595,600],pos:[deskWidth/2-30,322.5,deskZ+50],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'���� ������ 500mm Ȯ�� ħ�� ���� �� ��� 340mm',size:[bedWidth,30,bedLength],pos:[bedX,325,bedZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'���� ������ 500mm Ȯ�� ħ�� ���� �� ���� 400mm',size:[bedWidth,60,bedLength],pos:[bedX,370,bedZ],rot:[0,0,0],material:'fabric'},
-    {id:uid(),name:'ħ�� �߾� ���� ������',size:[30,285,bedLength-40],pos:[0,167.5,bedZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'ħ�� ���� �ٴ� ������',size:[bedWidth,285,30],pos:[bedX,167.5,bedFrontEdge+15],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'ħ�� ���� �ٴ� ������',size:[bedWidth,285,30],pos:[bedX,167.5,bedRearEdge-15],rot:[0,0,0],material:'oak'}
+    {id:uid(),name:'후면 전체 폭 책상 상판 · 깊이 700mm · 높이 650mm',size:[deskWidth,30,deskDepth],pos:[0,635,deskZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'책상 왼쪽 긴 측판 지지대',size:[60,595,600],pos:[-deskWidth/2+30,322.5,deskZ+50],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'책상 오른쪽 긴 측판 지지대',size:[60,595,600],pos:[deskWidth/2-30,322.5,deskZ+50],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'우측 출입폭 500mm 확보 침상 상판 · 상단 340mm',size:[bedWidth,30,bedLength],pos:[bedX,325,bedZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'우측 출입폭 500mm 확보 침상 쿠션 · 높이 400mm',size:[bedWidth,60,bedLength],pos:[bedX,370,bedZ],rot:[0,0,0],material:'fabric'},
+    {id:uid(),name:'침상 중앙 세로 지지판',size:[30,285,bedLength-40],pos:[0,167.5,bedZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'침상 앞쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedFrontEdge+15],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'침상 뒤쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedRearEdge-15],rot:[0,0,0],material:'oak'}
   ];
   state.objects.push(...rearDeskDevices(state.objects[0]));
   setPersonPose([-deskWidth/4,0,deskInnerEdge-330],0);
-  state.selectedId=state.objects.find(o=>o.name.startsWith('å�� ���� 27��ġ')).id;
+  state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();saveLocal();
 }
 function loadPlan2(includeDevices=true){
@@ -356,21 +356,21 @@ function loadPlan2(includeDevices=true){
   const supportLeft=bedRight+legClearance;
   const supportWidth=state.cargo.width/2-supportLeft;
   const supportX=(state.cargo.width/2+supportLeft)/2;
-  state.layoutName='2�� �� ���� å�� + ������ ħ��';
+  state.layoutName='2안 · 우측 책상 + 종방향 침상';
   state.objects=[
-    {id:uid(),name:'���� ���� å�� �� ���� 700mm �� ���� 650mm',size:[deskDepth,30,deskLength],pos:[deskX,635,deskZ],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'���� 150mm �ٸ� ������ ��� å�� �� ������',size:[supportWidth,595,60],pos:[supportX,322.5,deskFront+30],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'���� 150mm �ٸ� ������ ��� å�� �� ������',size:[supportWidth,595,60],pos:[supportX,322.5,deskRear-30],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'Ʈ��ũ ���� 1,900mm ħ�� �� å��� 100mm ��ħ',size:[bedWidth,30,bedLength],pos:[bedX,325,bedZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'1,900mm ħ�� ���� �� �ɴ� ���� 400mm',size:[bedWidth,60,bedLength],pos:[bedX,370,bedZ],rot:[0,0,0],material:'fabric'},
-    {id:uid(),name:'���� �� ���� ���� �� 500 �� 550 �� 330mm',size:[330,550,500],pos:[-state.cargo.width/2+165,675,deskZ],rot:[0,0,0],material:'fabric',shape:'wedge'},
-    {id:uid(),name:'ħ�� �߾� ������ ������',size:[30,285,bedLength-40],pos:[bedX,167.5,bedZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'ħ�� �ݺ� �� �ٴ� ������',size:[bedWidth,285,30],pos:[bedX,167.5,bedFront+15],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'ħ�� Ʈ��ũ �� �ٴ� ������',size:[bedWidth,285,30],pos:[bedX,167.5,bedRear-15],rot:[0,0,0],material:'oak'}
+    {id:uid(),name:'우측 장형 책상 · 깊이 700mm · 높이 650mm',size:[deskDepth,30,deskLength],pos:[deskX,635,deskZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'왼쪽 150mm 다리 공간을 비운 책상 앞 지지판',size:[supportWidth,595,60],pos:[supportX,322.5,deskFront+30],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'왼쪽 150mm 다리 공간을 비운 책상 뒤 지지판',size:[supportWidth,595,60],pos:[supportX,322.5,deskRear-30],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 고정 1,900mm 침상 · 책상과 100mm 겹침',size:[bedWidth,30,bedLength],pos:[bedX,325,bedZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'1,900mm 침상 쿠션 · 앉는 높이 400mm',size:[bedWidth,60,bedLength],pos:[bedX,370,bedZ],rot:[0,0,0],material:'fabric'},
+    {id:uid(),name:'왼쪽 벽 세움 쿠션 · 500 × 550 × 330mm',size:[330,550,500],pos:[-state.cargo.width/2+165,675,deskZ],rot:[0,0,0],material:'fabric',shape:'wedge'},
+    {id:uid(),name:'침상 중앙 종방향 지지판',size:[30,285,bedLength-40],pos:[bedX,167.5,bedZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'침상 격벽 쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedFront+15],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'침상 트렁크 쪽 바닥 지지판',size:[bedWidth,285,30],pos:[bedX,167.5,bedRear-15],rot:[0,0,0],material:'oak'}
   ];
   if(includeDevices!==false) state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
   setPersonPose([deskInnerX-220,0,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
-  state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('å�� ���� 27��ġ')).id:state.objects[0].id;
+  state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id:state.objects[0].id;
   rebuildObjects();saveLocal();
 }
 function loadPlan3(){
@@ -413,12 +413,12 @@ function loadPlan3(){
   const bedRearSupport=state.objects[8];
   const deskFrontSupport=state.objects[1];
   const deskRearSupport=state.objects[2];
-  deskFrontSupport.name='�����̵嵵�� �� ��ü ���� å�� ������';
+  deskFrontSupport.name='슬라이드도어 쪽 전체 막힘 책상 지지판';
   state.objects=state.objects.filter(o=>o.id!==deskRearSupport.id);
-  bedFrame.name=`�ݺ� ���� �ִ� ${bedLength.toLocaleString()}mm ħ�� �� �����԰� �´���`;
+  bedFrame.name=`격벽 고정 최대 ${bedLength.toLocaleString()}mm 침상 · 수납함과 맞닿음`;
   bedFrame.size[2]=bedLength;
   bedFrame.pos[2]=bedZ;
-  bedCushion.name=`${bedLength.toLocaleString()}mm ħ�� ���� �� �ɴ� ���� 400mm`;
+  bedCushion.name=`${bedLength.toLocaleString()}mm 침상 쿠션 · 앉는 높이 400mm`;
   bedCushion.size[2]=bedLength;
   bedCushion.pos[2]=bedZ;
   wallCushion.pos[2]=bedRear-wallCushion.size[2]/2;
@@ -432,59 +432,59 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+350],90,true);
-  state.layoutName='3�� �� 2�� + Ʈ��ũ ���� ������';
+  state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
-    {id:uid(),name:'Ʈ��ũ ������ �ٴ��� �� ���ΰ� �� ������',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'Ʈ��ũ ������ ���� ����',size:[30,590,cabinetDepth],pos:[-cabinetWidth/2+15,325,cabinetZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'Ʈ��ũ ������ ������ ����',size:[30,590,cabinetDepth],pos:[cabinetWidth/2-15,325,cabinetZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'Ʈ��ũ ������ ���� ĭ����',size:[30,590,cabinetDepth],pos:[-doorStep/2,325,cabinetZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'Ʈ��ũ ������ ������ ĭ����',size:[30,590,cabinetDepth],pos:[doorStep/2,325,cabinetZ],rot:[0,0,0],material:'oak'},
-    {id:uid(),name:'å�� ���� ���� ���� ���� �� ��� ���� 650mm',size:[fillerWidth,30,cabinetDepth],pos:[fillerX,635,cabinetZ],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'Ʈ��ũ ������ ���� ����',size:[doorWidth,560,18],pos:[-doorStep,310,doorZ],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'Ʈ��ũ ������ �߾� ����',size:[doorWidth,560,18],pos:[0,310,doorZ],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'å�� �Ʒ� Ʈ��ũ �� ���� ���� ������',size:[doorWidth,560,20],pos:[doorStep,310,doorZ],rot:[0,0,0],material:'birch',shape:'rounded-opening',inset:30,radius:35},
-    {id:uid(),name:'������ ���� ������',size:[80,18,18],pos:[-doorStep,500,doorZ+18],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'������ �߾� ������',size:[80,18,18],pos:[0,500,doorZ+18],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'�ǳ� �� ���� ��� ���� ����',size:[doorWidth,560,18],pos:[-doorStep,310,cabinetFront-9],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'�ǳ� �� �߾� ��� ���� ����',size:[doorWidth,560,18],pos:[0,310,cabinetFront-9],rot:[0,0,0],material:'birch'},
-    {id:uid(),name:'å�� �Ʒ� �յ� ���� PS5 ��ġ �� ���� ��ǳ ����',size:[doorWidth,560,20],pos:[doorStep,310,cabinetFront-10],rot:[0,0,0],material:'birch',shape:'rounded-opening',inset:30,radius:35},
-    {id:uid(),name:'PS5 ũ�� ȭ��Ʈ �ܼ�',size:[104,390,260],pos:[doorStep,225,cabinetFront+150],rot:[0,0,0],material:'white'},
-    {id:uid(),name:'�ܼ� �߾� ���� ��ǳ��',size:[18,360,270],pos:[doorStep-52,225,cabinetFront+150],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'å�� ���� 27��ġ ����� ��ü �� 620 �� 380mm',size:[32,380,620],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'27��ġ ����� ȭ�� �� ���� �¼� ����',size:[5,350,590],pos:[monitorX-18.5,monitorY,monitorZ],rot:[0,0,0],material:'screen'},
-    {id:uid(),name:'����;� VESA ������',size:[30,110,110],pos:[armPlateX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ����',size:[armLength,30,30],pos:[armX,940,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� ���� ���',size:[35,255,35],pos:[armPoleX,812.5,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'����;� å�� Ŭ����',size:[80,35,90],pos:[armPoleX,667.5,monitorZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'å�� ������ ��Ʈ�� ���ĵ� ��ħ',size:[250,20,300],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'��Ʈ�� ���ĵ� ���� ������',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'���ĵ� �� 15��ġ ��Ʈ�� ��ü',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
-    {id:uid(),name:'��Ʈ�� ȭ�� �� ���� �¼� ����',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
-    {id:uid(),name:'ħ�� �� ��° ��� ���� �� 480 �� 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
+    {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'트렁크 수납함 왼쪽 측판',size:[30,590,cabinetDepth],pos:[-cabinetWidth/2+15,325,cabinetZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'트렁크 수납함 오른쪽 측판',size:[30,590,cabinetDepth],pos:[cabinetWidth/2-15,325,cabinetZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'트렁크 수납함 왼쪽 칸막이',size:[30,590,cabinetDepth],pos:[-doorStep/2,325,cabinetZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'트렁크 수납함 오른쪽 칸막이',size:[30,590,cabinetDepth],pos:[doorStep/2,325,cabinetZ],rot:[0,0,0],material:'oak'},
+    {id:uid(),name:'책상 연결 왼쪽 마감 상판 · 상면 높이 650mm',size:[fillerWidth,30,cabinetDepth],pos:[fillerX,635,cabinetZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 수납함 왼쪽 도어',size:[doorWidth,560,18],pos:[-doorStep,310,doorZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'트렁크 수납함 중앙 도어',size:[doorWidth,560,18],pos:[0,310,doorZ],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'책상 아래 트렁크 쪽 라운드 관통 프레임',size:[doorWidth,560,20],pos:[doorStep,310,doorZ],rot:[0,0,0],material:'birch',shape:'rounded-opening',inset:30,radius:35},
+    {id:uid(),name:'수납함 왼쪽 손잡이',size:[80,18,18],pos:[-doorStep,500,doorZ+18],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'수납함 중앙 손잡이',size:[80,18,18],pos:[0,500,doorZ+18],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'실내 쪽 왼쪽 양면 수납 도어',size:[doorWidth,560,18],pos:[-doorStep,310,cabinetFront-9],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'실내 쪽 중앙 양면 수납 도어',size:[doorWidth,560,18],pos:[0,310,cabinetFront-9],rot:[0,0,0],material:'birch'},
+    {id:uid(),name:'책상 아래 앞뒤 관통 PS5 니치 · 라운드 통풍 개방',size:[doorWidth,560,20],pos:[doorStep,310,cabinetFront-10],rot:[0,0,0],material:'birch',shape:'rounded-opening',inset:30,radius:35},
+    {id:uid(),name:'PS5 크기 화이트 콘솔',size:[104,390,260],pos:[doorStep,225,cabinetFront+150],rot:[0,0,0],material:'white'},
+    {id:uid(),name:'콘솔 중앙 블랙 통풍부',size:[18,360,270],pos:[doorStep-52,225,cabinetFront+150],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'책상 왼쪽 27인치 모니터 본체 · 620 × 380mm',size:[32,380,620],pos:[monitorX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'27인치 모니터 화면 · 좌측 좌석 방향',size:[5,350,590],pos:[monitorX-18.5,monitorY,monitorZ],rot:[0,0,0],material:'screen'},
+    {id:uid(),name:'모니터암 VESA 결합판',size:[30,110,110],pos:[armPlateX,monitorY,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수평 관절',size:[armLength,30,30],pos:[armX,940,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 수직 기둥',size:[35,255,35],pos:[armPoleX,812.5,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'모니터암 책상 클램프',size:[80,35,90],pos:[armPoleX,667.5,monitorZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'책상 오른쪽 노트북 스탠드 받침',size:[250,20,300],pos:[laptopX,670,laptopZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'노트북 스탠드 높이 지지대',size:[30,150,80],pos:[laptopX+80,745,laptopZ],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'스탠드 위 15인치 노트북 본체',size:[24,230,340],pos:[laptopX+40,815,laptopZ],rot:[0,0,-12],material:'black'},
+    {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
+    {id:uid(),name:'침상 두 번째 빈백 쿠션 · 480 × 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
   );
   const bedLeft=bedFrame.pos[0]-bedFrame.size[0]/2;
   const bayWidth=(bedFrame.size[0]-bedCenterSupport.size[0])/2;
   const crateXs=[bedLeft+bayWidth/2,bedFrame.pos[0]+bedCenterSupport.size[0]/2+bayWidth/2];
   const crateRows=Array.from({length:5},(_,i)=>bedFront+200+i*340);
   const crateObjects=[];
-  crateRows.slice(0,3).forEach((z,i)=>crateObjects.push({id:uid(),name:`ħ�� �Ʒ� ��Ÿ �������� ���� ${i+1} �� 23L`,size:[340,270,340],pos:[crateXs[0],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
-  crateRows.forEach((z,i)=>crateObjects.push({id:uid(),name:`ħ�� �Ʒ� ��Ÿ �������� ���� ${i+1} �� 23L`,size:[340,270,340],pos:[crateXs[1],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
+  crateRows.slice(0,3).forEach((z,i)=>crateObjects.push({id:uid(),name:`침상 아래 만타 우유상자 왼쪽 ${i+1} · 23L`,size:[340,270,340],pos:[crateXs[0],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
+  crateRows.forEach((z,i)=>crateObjects.push({id:uid(),name:`침상 아래 만타 우유상자 안쪽 ${i+1} · 23L`,size:[340,270,340],pos:[crateXs[1],135,z],rot:[0,0,0],material:'black',shape:'rounded-opening',inset:35,radius:8}));
   const hatchAngle=70;
   const hatchDepth=340;
   const hatchObjects=crateRows.map((z,i)=>({
-    id:uid(),name:`ħ�� ��� ����Ʈ ���� ���� ${i+1} �� ���� ����`,size:[bedFrame.size[0]-30,18,hatchDepth],
+    id:uid(),name:`침상 상부 리프트 수납 도어 ${i+1} · 위로 열림`,size:[bedFrame.size[0]-30,18,hatchDepth],
     pos:[bedFrame.pos[0],349,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
     openPos:[bedFrame.pos[0],349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*hatchDepth/2,z+hatchDepth/2-Math.cos(THREE.MathUtils.degToRad(hatchAngle))*hatchDepth/2],
     openRot:[hatchAngle,0,0]
   }));
   state.objects.push(...crateObjects,...hatchObjects);
-  state.selectedId=state.objects.find(o=>o.name.startsWith('å�� ���� 27��ġ')).id;
+  state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();
   saveLocal();
 }
 
 function exportProject(){ const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pv5-cargo-layout.json';a.click();URL.revokeObjectURL(url); }
-function importProject(file){ const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data.cargo||!Array.isArray(data.objects))throw new Error();Object.assign(state,data);syncSettingsUI();rebuildCargo();rebuildObjects();saveLocal();}catch{$('boundaryWarning').textContent='�ùٸ� PV5 ���� ������ �ƴմϴ�.';$('boundaryWarning').classList.add('show');setTimeout(()=>{$('boundaryWarning').textContent='������ ���� ������ ��踦 ������ϴ�.';$('boundaryWarning').classList.remove('show');},2400);}};r.readAsText(file); }
+function importProject(file){ const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data.cargo||!Array.isArray(data.objects))throw new Error();Object.assign(state,data);syncSettingsUI();rebuildCargo();rebuildObjects();saveLocal();}catch{$('boundaryWarning').textContent='올바른 PV5 설계 파일이 아닙니다.';$('boundaryWarning').classList.add('show');setTimeout(()=>{$('boundaryWarning').textContent='선택한 판이 적재함 경계를 벗어났습니다.';$('boundaryWarning').classList.remove('show');},2400);}};r.readAsText(file); }
 function syncSettingsUI(){ $('cargoLength').value=state.cargo.length;$('cargoWidth').value=state.cargo.width;$('wheelhouseWidth').value=state.cargo.wheelhouseWidth||1330;$('cargoHeight').value=state.cargo.height;$('unitCost').value=state.unitCost;$('toggleShell').checked=state.shell;$('toggleGrid').checked=state.grid;$('togglePerson').checked=state.person;$('toggleStorage').checked=state.storageOpen; }
 
 document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>addObject(b.dataset.preset)));
@@ -496,10 +496,9 @@ $('deleteObject').addEventListener('click',deleteSelected);$('duplicateObject').
 $('toggleShell').addEventListener('change',e=>{state.shell=e.target.checked;cargoGroup.visible=state.shell;saveLocal();});$('toggleGrid').addEventListener('change',e=>{state.grid=e.target.checked;grid.visible=state.grid;saveLocal();});
 $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;updatePerson();saveLocal();});
 $('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();saveLocal();});
-$('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> ���踦 �����߽��ϴ�';setTimeout(saveLocal,1800);});
+$('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> 설계를 저장했습니다';setTimeout(saveLocal,1800);});
 $('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
 $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle('collapsed');$('cargoToggle').classList.toggle('closed');});
 ['cargoLength','cargoWidth','wheelhouseWidth','cargoHeight','unitCost'].forEach(id=>$(id).addEventListener('change',()=>{state.cargo.length=Math.max(500,Number($('cargoLength').value)||2255);state.cargo.width=Math.max(500,Number($('cargoWidth').value)||1565);state.cargo.wheelhouseWidth=Math.min(state.cargo.width,Math.max(500,Number($('wheelhouseWidth').value)||1330));state.cargo.height=Math.max(500,Number($('cargoHeight').value)||1520);state.unitCost=Math.max(0,Number($('unitCost').value)||0);syncSettingsUI();rebuildCargo();updateSummary();selectObject(state.selectedId);saveLocal();}));
 
 loadLocal(); syncSettingsUI(); initThree();
-
