@@ -561,6 +561,27 @@ function loadPlan3(){
   saveLocal();
 }
 
+function loadPlan4(){
+  loadPlan3();
+  const bedFrame=state.objects.find(o=>o.name.includes('침상 · 수납함과 맞닿음'));
+  const desk=state.objects.find(o=>o.name.startsWith('우측 장형 책상'));
+  const bedRear=bedFrame.pos[2]+bedFrame.size[2]/2;
+  const deskFront=desk.pos[2]-desk.size[2]/2;
+  const backrestLength=Math.min(820,bedRear-deskFront-40);
+  const backrest={
+    id:uid(),name:'책상 맞은편 침상 나무 등받이 · 8도 후경사',
+    size:[30,500,backrestLength],
+    pos:[bedFrame.pos[0]-bedFrame.size[0]/2+55,650,(bedRear+deskFront)/2],
+    rot:[0,0,8],material:'oak'
+  };
+  state.objects=state.objects.filter(o=>!o.name.startsWith('왼쪽 벽 세움 쿠션')&&!o.name.startsWith('침상 대형 빈백 쿠션'));
+  state.objects.push(backrest);
+  state.layoutName='4안 · 3안 + 책상 맞은편 나무 등받이';
+  state.selectedId=backrest.id;
+  rebuildObjects();
+  saveLocal();
+}
+
 function exportProject(){ const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pv5-cargo-layout.json';a.click();URL.revokeObjectURL(url); }
 function importProject(file){ const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data.cargo||!Array.isArray(data.objects))throw new Error();Object.assign(state,data);syncSettingsUI();rebuildCargo();rebuildObjects();saveLocal();}catch{$('boundaryWarning').textContent='올바른 PV5 설계 파일이 아닙니다.';$('boundaryWarning').classList.add('show');setTimeout(()=>{$('boundaryWarning').textContent='선택한 판이 적재함 경계를 벗어났습니다.';$('boundaryWarning').classList.remove('show');},2400);}};r.readAsText(file); }
 function syncSettingsUI(){ $('cargoLength').value=state.cargo.length;$('cargoWidth').value=state.cargo.width;$('wheelhouseWidth').value=state.cargo.wheelhouseWidth||1330;$('cargoHeight').value=state.cargo.height;$('unitCost').value=state.unitCost;$('toggleShell').checked=state.shell;$('toggleGrid').checked=state.grid;$('togglePerson').checked=state.person;$('toggleStorage').checked=state.storageOpen; }
@@ -575,7 +596,7 @@ $('toggleShell').addEventListener('change',e=>{state.shell=e.target.checked;carg
 $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;updatePerson();saveLocal();});
 $('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> 설계를 저장했습니다';setTimeout(saveLocal,1800);});
-$('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
+$('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('loadPlan4').addEventListener('click',loadPlan4);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
 $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle('collapsed');$('cargoToggle').classList.toggle('closed');});
 ['cargoLength','cargoWidth','wheelhouseWidth','cargoHeight','unitCost'].forEach(id=>$(id).addEventListener('change',()=>{state.cargo.length=Math.max(500,Number($('cargoLength').value)||2255);state.cargo.width=Math.max(500,Number($('cargoWidth').value)||1565);state.cargo.wheelhouseWidth=Math.min(state.cargo.width,Math.max(500,Number($('wheelhouseWidth').value)||1330));state.cargo.height=Math.max(500,Number($('cargoHeight').value)||1520);state.unitCost=Math.max(0,Number($('unitCost').value)||0);syncSettingsUI();rebuildCargo();updateSummary();selectObject(state.selectedId);saveLocal();}));
 
