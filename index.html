@@ -55,9 +55,9 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const stage=document.querySelector('#stage');
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x111614); scene.fog=new THREE.Fog(0x111614,5.5,11);
-const camera=new THREE.PerspectiveCamera(42,1,.01,50); camera.position.set(4.3,3.0,4.5);
+const camera=new THREE.PerspectiveCamera(42,1,.01,50); camera.position.set(3.6,2.65,3.8);
 const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; stage.appendChild(renderer.domElement);
-const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.target.set(0,.50,-.25); controls.minDistance=2.4; controls.maxDistance=10;
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.target.set(0,.45,0); controls.minDistance=2.4; controls.maxDistance=8;
 scene.add(new THREE.HemisphereLight(0xdcece5,0x343128,2.1)); const sun=new THREE.DirectionalLight(0xfff1d8,3.2); sun.position.set(-3,5,3); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); scene.add(sun);
 
 const colors={oak:0xc5965c,oakDark:0x8f633a,mattress:0x659e82,cushion:0xd8b075,bean:0x6d785f,metal:0x272d2c,screen:0x162b31,crate:0x4779a7,skin:0xd7a57c,shirt:0x4f796b,pants:0x2c3e46,white:0xe8ece9};
@@ -84,38 +84,16 @@ function wheelHouse(side){
   house.castShadow=house.receiveShadow=true;
   return house;
 }
-function cabinSeat(name,x,z,material){
-  const seat=new THREE.Group(); seat.name=name;
-  add(seat,box(name+' base',.43,.16,.46,x,.27,z,material,true));
-  const back=box(name+' back',.43,.58,.13,x,.59,z-.17,material,true); back.rotation.x=-.12;
-  add(seat,back,box(name+' headrest',.24,.18,.12,x,.94,z-.20,material,true));
-  return seat;
-}
-function cabin(){
-  const cab=new THREE.Group(); cab.name='front cabin and driver seat';
-  const cabMat=new THREE.MeshStandardMaterial({color:0x83908a,transparent:true,opacity:.20,roughness:.7});
-  add(cab,
-    box('cabin floor',1.565,.06,.92,0,.03,-1.59,new THREE.MeshStandardMaterial({color:0x3d4542,roughness:.9})),
-    box('front lower body',1.565,.52,.12,0,.29,-2.08,cabMat),
-    cabinSeat('driver seat',-.36,-1.54,M.pants),
-    cabinSeat('passenger seat',.36,-1.54,M.metal)
-  );
-  const windshield=box('windshield',1.40,.56,.035,0,.88,-2.02,new THREE.MeshStandardMaterial({color:0x6e9aa5,transparent:true,opacity:.28,metalness:.15,roughness:.15})); windshield.rotation.x=-.28; cab.add(windshield);
-  const wheel=new THREE.Mesh(new THREE.TorusGeometry(.145,.018,12,40),M.metal); wheel.name='steering wheel'; wheel.position.set(-.36,.78,-1.86); wheel.rotation.x=Math.PI/2.25; cab.add(wheel);
-  const column=cyl('steering column',.018,.34,-.36,.62,-1.76,M.metal,'z'); column.rotation.x=.45; cab.add(column,label('운전석',-.36,1.28,-1.54));
-  const cabEdges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.62,1.32,1.02)),new THREE.LineBasicMaterial({color:0x739687,transparent:true,opacity:.55})); cabEdges.position.set(0,.66,-1.59); cab.add(cabEdges);
-  return cab;
-}
 
 function vehicle(){const g=new THREE.Group();g.name='PV5 vehicle';
   add(g,box('cargo floor',1.565,.045,2.255,0,.022,0,new THREE.MeshStandardMaterial({color:0x7d6952,roughness:.9})),box('bulkhead',1.565,1.45,.035,0,.75,-1.145,new THREE.MeshStandardMaterial({color:0xaab4af,transparent:true,opacity:.18})),box('left wall',.035,1.35,2.255,-.8,.7,0,new THREE.MeshStandardMaterial({color:0x9aa9a2,transparent:true,opacity:.12})),box('right rail',.035,.38,2.255,.8,.2,0,new THREE.MeshStandardMaterial({color:0x9aa9a2,transparent:true,opacity:.12})));
   const lineMat=new THREE.LineBasicMaterial({color:0x739687,transparent:true,opacity:.65});const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.62,1.52,2.34)),lineMat);edges.position.y=.76;g.add(edges);
-  add(g,wheelHouse(-1),wheelHouse(1),cabin());
+  add(g,wheelHouse(-1),wheelHouse(1));
   return g;
 }
 
 function deskRear(g){add(g,box('rear desk top',1.54,.035,.70,0,.65,.78),box('left desk support',.05,.61,.66,-.72,.325,.78,M.oakDark),box('right desk support',.05,.61,.66,.72,.325,.78,M.oakDark));monitor(g,-.34,.67,.84,'rear');laptop(g,.36,.67,.83,'rear')}
-function deskSide(g,plan3=false){add(g,box('right desk top',.70,.035,1.20,.4325,.65,.31),box('slide door solid support',.65,.61,.045,.46,.325,-.27,M.oakDark));if(!plan3)add(g,box('rear desk support',.45,.61,.045,.56,.325,.89,M.oakDark));monitor(g,.29,.67,.02,'side');laptop(g,.29,.67,.58,'side')}
+function deskSide(g,plan3=false){add(g,box('right desk top',.70,.035,1.10,.4325,.65,.26),box('slide door solid support',.65,.61,.045,.46,.325,-.27,M.oakDark));if(!plan3)add(g,box('rear desk support',.45,.61,.045,.56,.325,.79,M.oakDark));monitor(g,.29,.67,.02,'side');laptop(g,.29,.67,.50,'side')}
 function monitor(g,x,y,z,side){const arm=new THREE.Group();add(arm,cyl('monitor pole',.022,.32,x,y+.16,z,M.metal,'y'),box('monitor arm',.035,.035,.25,x,y+.28,z-.10,M.metal));const mon=box('27 inch monitor',.62,.38,.035,x,y+.42,z-.24,M.screen);if(side==='side'){mon.rotation.y=Math.PI/2;mon.position.set(x-.20,y+.42,z-.08)}add(g,arm,mon)}
 function laptop(g,x,y,z,side){const base=box('laptop stand',.30,.025,.24,x,y+.035,z,M.metal);const screen=box('laptop',.32,.22,.022,x,y+.16,z-.09,M.screen);screen.rotation.x=-.18;if(side==='side'){base.rotation.y=Math.PI/2;screen.rotation.set(-.18,Math.PI/2,0)}add(g,base,screen)}
 function mattress(g,w,d,x,z){add(g,box('bed frame',w,.30,d,x,.20,z,M.oakDark),box('mattress',w,.10,d,x,.35,z,M.mattress,true))}
@@ -126,42 +104,23 @@ function cratesAndDoors(g){const root=new THREE.Group();root.name='8 milk crates
   for(let i=0;i<5;i++){const door=box('lift-up bed door',.91,.045,.34,-.14,.56,-.91+i*.35,M.oak);door.rotation.x=-1.0;door.position.y=.56;door.position.z=-.84+i*.35;root.add(door)}g.add(root);return root}
 
 function limb(a,b,r,mat){const mid=a.clone().add(b).multiplyScalar(.5);const len=a.distanceTo(b);const m=cyl('limb',r,len,mid.x,mid.y,mid.z,mat,'y');m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());return m}
-function person(plan){
-  const p=new THREE.Group(); p.name='163cm proportional seated person'; p.userData.standingHeight=1.63;
-  const side=plan===1?'rear':'side';
-  const hip=side==='rear'?new THREE.Vector3(0,.49,.04):new THREE.Vector3(-.12,.49,.30);
-  if(plan===3)hip.z=.42;
-  const torso=box('torso',.34,.47,.22,hip.x,hip.y+.285,hip.z,M.shirt,true); if(side==='side')torso.rotation.y=Math.PI/2;
-  const neck=cyl('neck',.055,.10,hip.x,1.035,hip.z,M.skin,'y');
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.125,32,20),M.skin); head.name='head'; head.position.set(hip.x,1.15,hip.z); head.scale.set(.88,1.08,.92); head.castShadow=true;
-  add(p,torso,neck,head,label('163cm',hip.x,1.42,hip.z));
-  if(side==='rear'){
-    const lk=new THREE.Vector3(-.14,.40,.46),rk=new THREE.Vector3(.14,.40,.46),la=new THREE.Vector3(-.14,.11,.53),ra=new THREE.Vector3(.14,.11,.53);
-    add(p,limb(hip.clone().add(new THREE.Vector3(-.10,0,0)),lk,.062,M.pants),limb(hip.clone().add(new THREE.Vector3(.10,0,0)),rk,.062,M.pants),limb(lk,la,.052,M.pants),limb(rk,ra,.052,M.pants),box('left foot',.14,.07,.25,-.14,.075,.64,M.metal,true),box('right foot',.14,.07,.25,.14,.075,.64,M.metal,true));
-  }else{
-    const lk=new THREE.Vector3(.22,.40,hip.z-.08),rk=new THREE.Vector3(.22,.40,hip.z+.09),la=new THREE.Vector3(.38,.11,hip.z-.08),ra=new THREE.Vector3(.38,.11,hip.z+.09);
-    add(p,limb(hip.clone().add(new THREE.Vector3(.08,0,-.08)),lk,.062,M.pants),limb(hip.clone().add(new THREE.Vector3(.08,0,.08)),rk,.062,M.pants),limb(lk,la,.052,M.pants),limb(rk,ra,.052,M.pants),box('left foot',.25,.07,.14,.48,.075,hip.z-.08,M.metal,true),box('right foot',.25,.07,.14,.48,.075,hip.z+.09,M.metal,true));
-  }
-  const shoulder=side==='rear'?new THREE.Vector3(0,.94,.06):new THREE.Vector3(-.03,.94,hip.z);
-  const le=side==='rear'?new THREE.Vector3(-.27,.78,.43):new THREE.Vector3(.24,.77,hip.z-.15);
-  const re=plan===3?new THREE.Vector3(.23,.665,.80):(side==='rear'?new THREE.Vector3(.27,.78,.43):new THREE.Vector3(.24,.77,hip.z+.15));
-  const lh=side==='rear'?new THREE.Vector3(-.19,.68,.67):new THREE.Vector3(.39,.68,hip.z-.06);
-  const rh=plan===3?new THREE.Vector3(.40,.68,.61):(side==='rear'?new THREE.Vector3(.19,.68,.67):new THREE.Vector3(.39,.68,hip.z+.06));
-  add(p,limb(shoulder.clone().add(new THREE.Vector3(-.13,0,0)),le,.047,M.shirt),limb(le,lh,.040,M.skin),limb(shoulder.clone().add(new THREE.Vector3(.13,0,0)),re,.047,M.shirt),limb(re,rh,.040,M.skin));
-  return p;
-}
+function person(plan){const p=new THREE.Group();p.name='163cm seated person';const side=plan===1?'rear':'side';const hip=side==='rear'?new THREE.Vector3(0,.54,.12):new THREE.Vector3(-.04,.54,.36);if(plan===3)hip.z=.49;
+  const torso=box('torso',.30,.45,.20,hip.x,hip.y+.30,hip.z,M.shirt,true);if(side==='side')torso.rotation.y=Math.PI/2;const head=new THREE.Mesh(new THREE.SphereGeometry(.12,28,18),M.skin);head.position.set(hip.x,1.02,hip.z);head.castShadow=true;add(p,torso,head,label('163cm',hip.x,1.25,hip.z));
+  if(side==='rear'){const lk=new THREE.Vector3(-.12,.39,.46),rk=new THREE.Vector3(.12,.39,.46),lf=new THREE.Vector3(-.12,.10,.57),rf=new THREE.Vector3(.12,.10,.57);add(p,limb(hip.clone().add(new THREE.Vector3(-.09,0,0)),lk,.055,M.pants),limb(hip.clone().add(new THREE.Vector3(.09,0,0)),rk,.055,M.pants),limb(lk,lf,.05,M.pants),limb(rk,rf,.05,M.pants));}
+  else{const lk=new THREE.Vector3(.18,.40,hip.z),rk=new THREE.Vector3(.20,.40,hip.z+.04),lf=new THREE.Vector3(.40,.10,hip.z),rf=new THREE.Vector3(.43,.10,hip.z+.04);add(p,limb(hip.clone().add(new THREE.Vector3(.08,0,-.07)),lk,.055,M.pants),limb(hip.clone().add(new THREE.Vector3(.08,0,.07)),rk,.055,M.pants),limb(lk,lf,.05,M.pants),limb(rk,rf,.05,M.pants));}
+  const shoulder=side==='rear'?new THREE.Vector3(0,.91,.12):new THREE.Vector3(0,.91,hip.z);const le=side==='rear'?new THREE.Vector3(-.25,.76,.45):new THREE.Vector3(.24,.75,hip.z-.12);const re=plan===3?new THREE.Vector3(.22,.665,.78):(side==='rear'?new THREE.Vector3(.25,.76,.45):new THREE.Vector3(.24,.75,hip.z+.13));const lh=side==='rear'?new THREE.Vector3(-.18,.68,.67):new THREE.Vector3(.35,.68,hip.z-.05);const rh=plan===3?new THREE.Vector3(.38,.68,.60):(side==='rear'?new THREE.Vector3(.18,.68,.67):new THREE.Vector3(.35,.68,hip.z+.05));add(p,limb(shoulder.clone().add(new THREE.Vector3(-.12,0,0)),le,.043,M.shirt),limb(le,lh,.038,M.skin),limb(shoulder.clone().add(new THREE.Vector3(.12,0,0)),re,.043,M.shirt),limb(re,rh,.038,M.skin));return p}
 
 function build(plan){if(planRoot)scene.remove(planRoot);planRoot=new THREE.Group();planRoot.name='layout '+plan;
   if(plan===1){mattress(planRoot,1.065,1.48,-.25,-.27);deskRear(planRoot)}
   if(plan===2){mattress(planRoot,.965,1.90,-.30,.1775);deskSide(planRoot);cushions(planRoot,-.58)}
   if(plan===3){mattress(planRoot,.965,1.815,-.30,-.22);deskSide(planRoot,true);cushions(planRoot,-.70);storageRoot=storage(planRoot);planRoot.add(storageRoot);if(current.storageOpen)cratesAndDoors(planRoot)}
   if(current.person){personRoot=person(plan);planRoot.add(personRoot)} scene.add(planRoot);updateUi()}
-function updateUi(){const names={1:'1안 · 후면 데스크 + 횡방향 침상',2:'2안 · 우측 데스크 + 종방향 침상',3:'3안 · 후면 수납함 통합'};document.querySelector('#planBadge').textContent=names[current.plan];document.querySelectorAll('[data-plan]').forEach(b=>b.classList.toggle('active',+b.dataset.plan===current.plan));document.querySelector('#storageToggle').disabled=current.plan!==3;const specs={1:'<strong>1안</strong><br>책상 1,540 × 700mm · 높이 650mm<br>침상 폭 1,065mm · 우측 통로 500mm<br>침상–책상 겹침 100mm',2:'<strong>2안</strong><br>우측 책상 1,200 × 700mm<br>침상 길이 1,900mm · 높이 400mm<br>책상–침상 겹침 100mm',3:'<strong>3안</strong><br>우측 책상 1,200 × 700mm<br>수납함 1,465 × 400mm · 높이 650mm<br>침상 길이 1,815mm · 우유상자 8개<br>오른쪽 팔꿈치: 수납함 상판 위'};document.querySelector('#spec').innerHTML=specs[current.plan]}
+function updateUi(){const names={1:'1안 · 후면 데스크 + 횡방향 침상',2:'2안 · 우측 데스크 + 종방향 침상',3:'3안 · 후면 수납함 통합'};document.querySelector('#planBadge').textContent=names[current.plan];document.querySelectorAll('[data-plan]').forEach(b=>b.classList.toggle('active',+b.dataset.plan===current.plan));document.querySelector('#storageToggle').disabled=current.plan!==3;const specs={1:'<strong>1안</strong><br>책상 1,540 × 700mm · 높이 650mm<br>침상 폭 1,065mm · 우측 통로 500mm<br>침상–책상 겹침 100mm',2:'<strong>2안</strong><br>우측 책상 1,100 × 700mm<br>침상 길이 1,900mm · 높이 400mm<br>책상–침상 겹침 100mm',3:'<strong>3안</strong><br>수납함 1,465 × 400mm · 높이 650mm<br>침상 길이 1,815mm · 우유상자 8개<br>오른쪽 팔꿈치: 수납함 상판 위'};document.querySelector('#spec').innerHTML=specs[current.plan]}
 
 shellRoot=vehicle();scene.add(shellRoot);build(3);
 const ground=box('ground',8,.04,8,0,-.06,0,new THREE.MeshStandardMaterial({color:0x0c100f,roughness:1}));ground.receiveShadow=true;scene.add(ground);const grid=new THREE.GridHelper(8,32,0x33423c,0x202b27);grid.position.y=-.035;scene.add(grid);
 document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{current.plan=+b.dataset.plan;build(current.plan)});document.querySelector('#personToggle').onchange=e=>{current.person=e.target.checked;build(current.plan)};document.querySelector('#storageToggle').onchange=e=>{current.storageOpen=e.target.checked;build(current.plan)};document.querySelector('#shellToggle').onchange=e=>{current.shell=e.target.checked;shellRoot.visible=current.shell};
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;const poses={iso:[4.3,3.0,4.5],top:[0,6.1,-.35],door:[4.6,1.8,-.25],rear:[0,1.7,4.8]};camera.position.fromArray(poses[v]);controls.target.set(0,.50,-.25);controls.update()});document.querySelector('#menu').onclick=()=>document.querySelector('#panel').classList.toggle('collapsed');
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const v=b.dataset.view;const poses={iso:[3.6,2.65,3.8],top:[0,5.2,.01],door:[3.8,1.6,0],rear:[0,1.5,4.2]};camera.position.fromArray(poses[v]);controls.target.set(0,.45,0);controls.update()});document.querySelector('#menu').onclick=()=>document.querySelector('#panel').classList.toggle('collapsed');
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}addEventListener('resize',resize);resize();document.querySelector('#loading').remove();
 renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
 </script>
