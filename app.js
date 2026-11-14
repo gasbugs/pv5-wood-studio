@@ -52,7 +52,7 @@ function rebuildCargo(){
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
   const wheelhouseShape=new THREE.Shape();
-  const baseHalfLength=.58,shoulderHalfLength=.49,archHalfLength=.40;
+  const baseHalfLength=.44,shoulderHalfLength=.415,archHalfLength=.40;
   const shoulderHeight=.17,archRise=.22;
   wheelhouseShape.moveTo(-baseHalfLength,0);
   wheelhouseShape.lineTo(-baseHalfLength,.08);
@@ -82,42 +82,64 @@ function rebuildCargo(){
     cargoGroup.add(wheelhouseEdges);
   }
   // 후면 개구부는 실차처럼 상단이 둥글고 하단 모서리가 안쪽으로 좁아지는 문틀로 표현한다.
-  const rearOpeningHalf=Math.min((w-.08)/2,.6715);
-  const rearOpeningBottomHalf=Math.max(.50,rearOpeningHalf-.095);
+  const rearOpeningHalf=Math.min((w-.08)/2,.685);
+  const rearOpeningBottomHalf=Math.min(rearOpeningHalf-.20,.46);
   const rearOpeningBottom=.035;
   const rearOpeningTop=Math.min(h-.06,1.45);
-  const rearFrameShape=new THREE.Shape();
-  rearFrameShape.moveTo(-w/2,0);
-  rearFrameShape.lineTo(w/2,0);
-  rearFrameShape.lineTo(w/2,h);
-  rearFrameShape.lineTo(-w/2,h);
-  rearFrameShape.closePath();
   const rearOpening=new THREE.Path();
   rearOpening.moveTo(-rearOpeningBottomHalf,rearOpeningBottom);
-  rearOpening.quadraticCurveTo(-rearOpeningHalf,rearOpeningBottom,-rearOpeningHalf,rearOpeningBottom+.12);
-  rearOpening.lineTo(-rearOpeningHalf,rearOpeningTop-.13);
-  rearOpening.quadraticCurveTo(-rearOpeningHalf,rearOpeningTop,-rearOpeningHalf+.13,rearOpeningTop);
-  rearOpening.lineTo(rearOpeningHalf-.13,rearOpeningTop);
-  rearOpening.quadraticCurveTo(rearOpeningHalf,rearOpeningTop,rearOpeningHalf,rearOpeningTop-.13);
-  rearOpening.lineTo(rearOpeningHalf,rearOpeningBottom+.12);
-  rearOpening.quadraticCurveTo(rearOpeningHalf,rearOpeningBottom,rearOpeningBottomHalf,rearOpeningBottom);
+  rearOpening.bezierCurveTo(-.50,rearOpeningBottom,-.55,.12,-.58,.24);
+  rearOpening.bezierCurveTo(-.61,.35,-rearOpeningHalf,.43,-rearOpeningHalf,.56);
+  rearOpening.lineTo(-rearOpeningHalf,rearOpeningTop-.16);
+  rearOpening.quadraticCurveTo(-rearOpeningHalf,rearOpeningTop,-rearOpeningHalf+.16,rearOpeningTop);
+  rearOpening.lineTo(rearOpeningHalf-.16,rearOpeningTop);
+  rearOpening.quadraticCurveTo(rearOpeningHalf,rearOpeningTop,rearOpeningHalf,rearOpeningTop-.16);
+  rearOpening.lineTo(rearOpeningHalf,.56);
+  rearOpening.bezierCurveTo(rearOpeningHalf,.43,.61,.35,.58,.24);
+  rearOpening.bezierCurveTo(.55,.12,.50,rearOpeningBottom,rearOpeningBottomHalf,rearOpeningBottom);
   rearOpening.lineTo(-rearOpeningBottomHalf,rearOpeningBottom);
   rearOpening.closePath();
-  rearFrameShape.holes.push(rearOpening);
-  const rearFrameGeo=new THREE.ExtrudeGeometry(rearFrameShape,{depth:.045,bevelEnabled:false,curveSegments:16});
-  rearFrameGeo.translate(0,0,-.0225);
-  const rearFrameMat=new THREE.MeshStandardMaterial({color:0x707a75,roughness:.84,metalness:.06,transparent:true,opacity:.48,side:THREE.DoubleSide});
+  const rearContourPoints=rearOpening.getSpacedPoints(120).map(point=>new THREE.Vector3(point.x,point.y,0));
+  const rearContourCurve=new THREE.CatmullRomCurve3(rearContourPoints,true,'centripetal');
+  const rearFrameGeo=new THREE.TubeGeometry(rearContourCurve,160,.014,8,true);
+  const rearFrameMat=new THREE.MeshStandardMaterial({color:0x58625d,roughness:.84,metalness:.06,transparent:true,opacity:.86});
   const rearFrame=new THREE.Mesh(rearFrameGeo,rearFrameMat);
   rearFrame.position.set(0,0,l/2-.018);
   rearFrame.castShadow=true;
   cargoGroup.add(rearFrame);
-  const rearFrameEdges=new THREE.LineSegments(new THREE.EdgesGeometry(rearFrameGeo,24),edgeMat);
-  rearFrameEdges.position.copy(rearFrame.position);
-  cargoGroup.add(rearFrameEdges);
   // 카고 바닥의 세로 골은 가구 간섭을 확인할 수 있을 정도만 표현한다.
-  const deck=new THREE.Mesh(new THREE.BoxGeometry(w-.05,.025,l-.05),deckMat); deck.position.y=.013; deck.receiveShadow=true; cargoGroup.add(deck);
-  for(let x=-w/2+.12;x<w/2-.05;x+=.14){
-    const seam=new THREE.Mesh(new THREE.BoxGeometry(.009,.005,l-.08),caulkMat); seam.position.set(x,.028,0); cargoGroup.add(seam);
+  const matLength=Math.min(l-.05,2.16);
+  const matWideHalf=Math.min(w/2-.03,.68);
+  const matRearHalf=Math.min(matWideHalf,.46);
+  const matFront=-matLength/2;
+  const matRear=matLength/2;
+  const matTransition=.06;
+  const matShape=new THREE.Shape();
+  matShape.moveTo(-matWideHalf,matFront);
+  matShape.lineTo(matWideHalf,matFront);
+  matShape.lineTo(matWideHalf,matTransition-.14);
+  matShape.lineTo(matWideHalf-.03,matTransition-.08);
+  matShape.lineTo(matRearHalf+.06,matTransition-.08);
+  matShape.lineTo(matRearHalf+.06,matTransition-.02);
+  matShape.lineTo(matRearHalf,matTransition+.02);
+  matShape.lineTo(matRearHalf,matRear);
+  matShape.lineTo(-matRearHalf,matRear);
+  matShape.lineTo(-matRearHalf,matTransition+.02);
+  matShape.lineTo(-matRearHalf-.06,matTransition-.02);
+  matShape.lineTo(-matRearHalf-.06,matTransition-.08);
+  matShape.lineTo(-matWideHalf+.03,matTransition-.08);
+  matShape.lineTo(-matWideHalf,matTransition-.14);
+  matShape.closePath();
+  const deckGeo=new THREE.ExtrudeGeometry(matShape,{depth:.025,bevelEnabled:false});
+  deckGeo.translate(0,0,-.0125);
+  deckGeo.rotateX(Math.PI/2);
+  const deck=new THREE.Mesh(deckGeo,deckMat); deck.position.y=.013; deck.receiveShadow=true; cargoGroup.add(deck);
+  for(let x=-matWideHalf+.12;x<matWideHalf-.05;x+=.14){
+    const seamRear=Math.abs(x)<=matRearHalf-.01?matRear-.02:matTransition-.10;
+    const seamLength=seamRear-(matFront+.02);
+    const seam=new THREE.Mesh(new THREE.BoxGeometry(.009,.005,seamLength),caulkMat);
+    seam.position.set(x,.028,(matFront+.02+seamRear)/2);
+    cargoGroup.add(seam);
   }
   for(const x of [-w/2+.025,w/2-.025]){
     const rail=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,l*.82),interiorMat); rail.position.set(x,.22,0); cargoGroup.add(rail);
@@ -204,6 +226,49 @@ function setPersonPose(position,rotationY,rightElbowToCabinet=false){
 
 function panelMaterial(kind){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:kind==='fabric'?.92:.62,metalness:0}); }
 function geometryFor(obj){
+  if(obj.shape==='rear-side-door-left'||obj.shape==='rear-side-door-right-vented'){
+    const width=obj.size[0]/1000;
+    const height=obj.size[1]/1000;
+    const depth=obj.size[2]/1000;
+    const hingeSide=obj.shape==='rear-side-door-left'?-1:1;
+    const outerX=hingeSide*width/2;
+    const innerX=-hingeSide*width/2;
+    const bottom=-height/2;
+    const top=height/2;
+    const bottomCutX=hingeSide*.084;
+    const shape=new THREE.Shape();
+    shape.moveTo(innerX,bottom);
+    shape.lineTo(innerX,top);
+    shape.lineTo(outerX,top);
+    shape.lineTo(outerX,bottom+.22);
+    shape.bezierCurveTo(outerX,bottom+.15,hingeSide*.10,bottom+.035,bottomCutX,bottom);
+    shape.lineTo(innerX,bottom);
+    shape.closePath();
+    if(obj.shape==='rear-side-door-right-vented'){
+      const left=-width/2+.035;
+      const right=width/2-.035;
+      const addHole=(holeBottom,holeTop)=>{
+        const radius=Math.min(.026,(right-left)/2,(holeTop-holeBottom)/2);
+        const hole=new THREE.Path();
+        hole.moveTo(left+radius,holeBottom);
+        hole.lineTo(right-radius,holeBottom);
+        hole.quadraticCurveTo(right,holeBottom,right,holeBottom+radius);
+        hole.lineTo(right,holeTop-radius);
+        hole.quadraticCurveTo(right,holeTop,right-radius,holeTop);
+        hole.lineTo(left+radius,holeTop);
+        hole.quadraticCurveTo(left,holeTop,left,holeTop-radius);
+        hole.lineTo(left,holeBottom+radius);
+        hole.quadraticCurveTo(left,holeBottom,left+radius,holeBottom);
+        shape.holes.push(hole);
+      };
+      addHole(bottom+.245,bottom+.34);
+      addHole(bottom+.375,top-.035);
+    }
+    const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:12});
+    geometry.translate(0,0,-depth/2);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
   if(obj.shape==='rounded-opening'||obj.shape==='double-rounded-opening'){
     const width=obj.size[0]/1000;
     const height=obj.size[1]/1000;
@@ -439,7 +504,8 @@ function loadPlan3(){
   loadPlan2(false);
   const rear=state.cargo.length/2;
   const cabinetClearance=50;
-  const cabinetWidth=state.cargo.width-cabinetClearance*2;
+  // Keep all three rear doors and their outer hinges inside the PV5's narrow lower opening.
+  const cabinetWidth=Math.min(state.cargo.width-cabinetClearance*2,1160);
   const cabinetDepth=400;
   const cabinetRear=rear-40;
   const cabinetFront=cabinetRear-cabinetDepth;
@@ -494,7 +560,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=16;
+  state.layoutVersion=17;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -525,7 +591,12 @@ function loadPlan3(){
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 대형 빈백 쿠션 · 사람 방향',size:[600,600,600],pos:[-state.cargo.width/2+355,700,-300],rot:[0,-155,0],material:'fabric',shape:'beanbag'}
   );
-  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===560&&o.size[2]===20).forEach(panel=>{panel.shape='double-rounded-opening';panel.centerGap=36;});
+  const rearLeftDoor=state.objects.find(o=>o.pos[0]===-doorStep&&o.pos[2]===doorZ&&o.size[1]===560);
+  if(rearLeftDoor)rearLeftDoor.shape='rear-side-door-left';
+  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===560&&o.size[2]===20).forEach(panel=>{
+    panel.shape=panel.pos[2]>cabinetZ?'rear-side-door-right-vented':'double-rounded-opening';
+    panel.centerGap=36;
+  });
   const cabinetDoors=state.objects.filter(o=>o.size[0]===doorWidth&&o.size[1]===560&&(o.size[2]===18||o.size[2]===20)&&o.pos[2]>cabinetZ);
   cabinetDoors.forEach(door=>{
     const hingeSide=door.pos[0]<0?-1:1;
@@ -655,6 +726,7 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 ['cargoLength','cargoWidth','wheelhouseWidth','cargoHeight','unitCost'].forEach(id=>$(id).addEventListener('change',()=>{state.cargo.length=Math.max(500,Number($('cargoLength').value)||2255);state.cargo.width=Math.max(500,Number($('cargoWidth').value)||1565);state.cargo.wheelhouseWidth=Math.min(state.cargo.width,Math.max(500,Number($('wheelhouseWidth').value)||1330));state.cargo.height=Math.max(500,Number($('cargoHeight').value)||1520);state.unitCost=Math.max(0,Number($('unitCost').value)||0);syncSettingsUI();rebuildCargo();updateSummary();selectObject(state.selectedId);saveLocal();}));
 
 loadLocal(); syncSettingsUI(); initThree();
-// Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
+// Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==16) loadPlan3();
+const hadPlan4=String(state.layoutName||'').startsWith('4');
+if(hasPlan3&&state.layoutVersion!==17){if(hadPlan4)loadPlan4();else loadPlan3();}
