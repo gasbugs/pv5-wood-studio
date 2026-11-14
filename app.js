@@ -440,7 +440,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=13;
+  state.layoutVersion=14;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -516,7 +516,7 @@ function loadPlan3(){
   const hatchAngle=70;
   const hatchWidth=bayWidth-20;
   const hatchDepth=bedLength-40;
-  const makeHatch=(x,width,direction,name)=>{
+  const makeSideHatch=(x,width,direction,name)=>{
     const hingeX=x-direction*width/2;
     return {
       id:uid(),name,size:[width,18,hatchDepth],
@@ -526,19 +526,34 @@ function loadPlan3(){
     };
   };
   const splitGap=10;
-  const halfHatchWidth=(hatchWidth-splitGap)/2;
-  const centerLeft=crateXs[1]-hatchWidth/2;
+  const halfHatchDepth=(hatchDepth-splitGap)/2;
+  const centerHatchLeft=bedFrame.pos[0]+bedCenterSupport.size[0]/2;
+  const centerHatchRight=deskInnerX-10;
+  const centerHatchWidth=centerHatchRight-centerHatchLeft;
+  const centerHatchX=(centerHatchLeft+centerHatchRight)/2;
+  const makeLengthHatch=(z,direction,name)=>{
+    const hingeZ=z-direction*halfHatchDepth/2;
+    return {
+      id:uid(),name,size:[centerHatchWidth,18,halfHatchDepth],
+      pos:[centerHatchX,349,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
+      openPos:[centerHatchX,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*halfHatchDepth/2,hingeZ+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*halfHatchDepth/2],
+      openRot:[-direction*hatchAngle,0,0]
+    };
+  };
+  const frontHatchZ=bedZ-(halfHatchDepth+splitGap)/2;
+  const rearHatchZ=bedZ+(halfHatchDepth+splitGap)/2;
   const hatchObjects=[
-    makeHatch(crateXs[0],hatchWidth,1,'운전석 쪽 침상 대형 수납 상판'),
-    makeHatch(centerLeft+halfHatchWidth/2,halfHatchWidth,1,'중앙 침상 안쪽 절반 상판'),
-    makeHatch(centerLeft+halfHatchWidth+splitGap+halfHatchWidth/2,halfHatchWidth,-1,'중앙 침상 책상 쪽 절반 상판')
+    makeSideHatch(crateXs[0],hatchWidth,1,'운전석 쪽 침상 대형 수납 상판'),
+    makeLengthHatch(frontHatchZ,-1,'중앙 침상 운전석 방향 절반 상판'),
+    makeLengthHatch(rearHatchZ,1,'중앙 침상 트렁크 방향 절반 상판')
   ];
+  const fixedDeskStrip={id:uid(),name:'책상 아래 침상 고정 받침대',size:[bedFrame.pos[0]+bedFrame.size[0]/2-centerHatchRight,30,hatchDepth],pos:[(centerHatchRight+bedFrame.pos[0]+bedFrame.size[0]/2)/2,325,bedZ],rot:[0,0,0],material:'oak',showOnlyWhenStorageOpen:true};
   crateObjects.forEach(crate=>{crate.size[2]=300;});
   const aislePartition={
     id:uid(),name:'침상 통로쪽 우유박스 가림 칸막이',size:[30,285,bedLength-40],
     pos:[bedFrame.pos[0]+bedFrame.size[0]/2-15,167.5,bedZ],rot:[0,0,0],material:'oak'
   };
-  state.objects.push(...crateObjects,aislePartition,...hatchObjects);
+  state.objects.push(...crateObjects,aislePartition,fixedDeskStrip,...hatchObjects);
   state.objects.filter(o=>o.material==='fabric').forEach(cushion=>{cushion.hideWhenStorageOpen=true;});
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();
@@ -566,4 +581,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==13) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==14) loadPlan3();
