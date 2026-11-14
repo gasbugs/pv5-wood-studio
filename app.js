@@ -238,7 +238,7 @@ function rebuildObjects(){ meshes.forEach(m=>scene.remove(m)); meshes.clear(); s
 function syncMesh(obj){ const old=meshes.get(obj.id); if(old){scene.remove(old);meshes.delete(obj.id);} makeMesh(obj); selectObject(obj.id,false); updateSummary(); renderObjectList(); saveLocal(); }
 
 function addObject(type){ const p=presets[type]; const count=state.objects.filter(o=>o.name.startsWith(p.name)).length+1; const obj={id:uid(),name:`${p.name} ${count}`,size:[...p.size],pos:[...p.pos],rot:[0,0,0],material:'birch'}; state.objects.push(obj); makeMesh(obj); renderObjectList(); selectObject(obj.id); updateSummary(); saveLocal(); }
-function selectObject(id,save=true){ state.selectedId=state.objects.some(o=>o.id===id)?id:null; const obj=selected(); document.querySelectorAll('.object-item').forEach(el=>el.classList.toggle('active',el.dataset.id===state.selectedId)); if(obj){ $('emptyInspector').classList.add('hidden');$('inspector').classList.remove('hidden'); fillInspector(obj); const mesh=meshes.get(obj.id); selectionBox.setFromObject(mesh);selectionBox.visible=true; checkBounds(obj); }else{$('emptyInspector').classList.remove('hidden');$('inspector').classList.add('hidden');selectionBox.visible=false;$('boundaryWarning').classList.remove('show');} if(save)saveLocal(); }
+function selectObject(id,save=true){ state.selectedId=state.objects.some(o=>o.id===id)?id:null; const obj=selected(); document.querySelectorAll('.object-item').forEach(el=>el.classList.toggle('active',el.dataset.id===state.selectedId)); if(obj){ $('emptyInspector').classList.add('hidden');$('inspector').classList.remove('hidden'); fillInspector(obj); const mesh=meshes.get(obj.id); selectionBox.setFromObject(mesh);selectionBox.visible=mesh.visible; checkBounds(obj); }else{$('emptyInspector').classList.remove('hidden');$('inspector').classList.add('hidden');selectionBox.visible=false;$('boundaryWarning').classList.remove('show');} if(save)saveLocal(); }
 function selected(){ return state.objects.find(o=>o.id===state.selectedId); }
 function deleteSelected(){ if(!state.selectedId)return; const mesh=meshes.get(state.selectedId);if(mesh)scene.remove(mesh);meshes.delete(state.selectedId);state.objects=state.objects.filter(o=>o.id!==state.selectedId);state.selectedId=null;renderObjectList();selectObject(null);updateSummary();saveLocal(); }
 function duplicateSelected(){ const o=selected();if(!o)return;const c=structuredClone(o);c.id=uid();c.name=`${o.name} 복사`;c.pos[0]+=50;c.pos[2]+=50;state.objects.push(c);makeMesh(c);renderObjectList();selectObject(c.id);updateSummary();saveLocal(); }
@@ -440,7 +440,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=12;
+  state.layoutVersion=13;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -539,6 +539,7 @@ function loadPlan3(){
     pos:[bedFrame.pos[0]+bedFrame.size[0]/2-15,167.5,bedZ],rot:[0,0,0],material:'oak'
   };
   state.objects.push(...crateObjects,aislePartition,...hatchObjects);
+  state.objects.filter(o=>o.material==='fabric').forEach(cushion=>{cushion.hideWhenStorageOpen=true;});
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();
   saveLocal();
@@ -565,4 +566,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==12) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==13) loadPlan3();
