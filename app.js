@@ -53,10 +53,10 @@ function rebuildCargo(){
   const wheelhouseX=w/2-wheelhouseDepth/2;
   for(const x of [-wheelhouseX,wheelhouseX]){
     const arch=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,wheelhouseDepth,48),interiorMat);
-    // 1,330mm 내측 폭을 유지하면서 실제 휠하우스처럼 낮고 앞뒤로 긴 아치 비율을 만든다.
-    arch.scale.set(.86,1,1.6);
+    // 1,330mm 내측 폭은 유지하고 원형 휠하우스의 아래쪽 절반은 적재함 바닥 아래로 숨긴다.
+    arch.scale.set(1.6,1,1.6);
     arch.rotation.z=Math.PI/2;
-    arch.position.set(x,.17,l*.22);
+    arch.position.set(x,.015,l*.22);
     arch.castShadow=true;
     cargoGroup.add(arch);
   }
@@ -431,7 +431,7 @@ function loadPlan3(){
   state.storageOpen=false;
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
-  setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+350],90,true);
+  setPersonPose([deskInnerX-60,0,desk.pos[2]-desk.size[2]/2+350],90,true);
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -462,6 +462,14 @@ function loadPlan3(){
     {id:uid(),name:'노트북 화면 · 좌측 좌석 방향',size:[5,205,315],pos:[laptopX+25,815,laptopZ],rot:[0,0,-12],material:'screen'},
     {id:uid(),name:'침상 두 번째 빈백 쿠션 · 480 × 480mm',size:[480,480,480],pos:[-state.cargo.width/2+240,600,-300],rot:[0,0,0],material:'fabric',shape:'beanbag'}
   );
+  const ps5=state.objects.find(o=>o.size[0]===104&&o.size[1]===390&&o.size[2]===260);
+  if(ps5){
+    ps5.name='중간 선반 위에 눕힌 흰색 PS5';
+    ps5.size=[390,104,260];
+    ps5.pos=[doorStep,377,cabinetZ];
+  }
+  state.objects=state.objects.filter(o=>!(o.size[0]===18&&o.size[1]===360&&o.size[2]===270));
+  state.objects.push({id:uid(),name:'오른쪽 수납함 중간 나무 선반',size:[doorWidth,30,cabinetDepth-30],pos:[doorStep,310,cabinetZ],rot:[0,0,0],material:'oak'});
   const bedLeft=bedFrame.pos[0]-bedFrame.size[0]/2;
   const bayWidth=(bedFrame.size[0]-bedCenterSupport.size[0])/2;
   const crateXs=[bedLeft+bayWidth/2,bedFrame.pos[0]+bedCenterSupport.size[0]/2+bayWidth/2];
