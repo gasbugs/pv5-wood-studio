@@ -235,18 +235,20 @@ function geometryFor(obj){
     const innerX=-hingeSide*width/2;
     const bottom=-height/2;
     const top=height/2;
-    const bottomCutX=hingeSide*.084;
+    const centerX=obj.pos[0]/1000;
+    const bottomCutX=hingeSide*.46-centerX;
     const shape=new THREE.Shape();
     shape.moveTo(innerX,bottom);
     shape.lineTo(innerX,top);
     shape.lineTo(outerX,top);
-    shape.lineTo(outerX,bottom+.22);
-    shape.bezierCurveTo(outerX,bottom+.15,hingeSide*.10,bottom+.035,bottomCutX,bottom);
+    shape.lineTo(outerX,bottom+.40);
+    shape.bezierCurveTo(hingeSide*.16,bottom+.32,hingeSide*.13,bottom+.21,hingeSide*.10,bottom+.09);
+    shape.quadraticCurveTo(hingeSide*.05,bottom+.02,bottomCutX,bottom);
     shape.lineTo(innerX,bottom);
     shape.closePath();
     if(obj.shape==='rear-side-door-right-vented'){
       const left=-width/2+.035;
-      const right=width/2-.035;
+      const right=.10;
       const addHole=(holeBottom,holeTop)=>{
         const radius=Math.min(.026,(right-left)/2,(holeTop-holeBottom)/2);
         const hole=new THREE.Path();
@@ -261,8 +263,8 @@ function geometryFor(obj){
         hole.quadraticCurveTo(left,holeBottom,left+radius,holeBottom);
         shape.holes.push(hole);
       };
-      addHole(bottom+.245,bottom+.34);
-      addHole(bottom+.375,top-.035);
+      addHole(bottom+.14,bottom+.265);
+      addHole(bottom+.315,top-.035);
     }
     const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false,curveSegments:12});
     geometry.translate(0,0,-depth/2);
@@ -504,8 +506,7 @@ function loadPlan3(){
   loadPlan2(false);
   const rear=state.cargo.length/2;
   const cabinetClearance=50;
-  // Keep all three rear doors and their outer hinges inside the PV5's narrow lower opening.
-  const cabinetWidth=Math.min(state.cargo.width-cabinetClearance*2,1160);
+  const cabinetWidth=state.cargo.width-cabinetClearance*2;
   const cabinetDepth=400;
   const cabinetRear=rear-40;
   const cabinetFront=cabinetRear-cabinetDepth;
@@ -516,7 +517,8 @@ function loadPlan3(){
   const fillerWidth=deskInnerX-cabinetLeft;
   const fillerX=(cabinetLeft+deskInnerX)/2;
   const doorGap=10;
-  const doorWidth=Math.floor((cabinetWidth-40-doorGap*2)/3);
+  const rearDoorSpan=Math.min(cabinetWidth-40,1340);
+  const doorWidth=Math.floor((rearDoorSpan-doorGap*2)/3);
   const doorStep=doorWidth+doorGap;
   const doorZ=cabinetRear+9;
   const desk=state.objects[0];
@@ -560,7 +562,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=17;
+  state.layoutVersion=18;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -729,4 +731,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==17){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==18){if(hadPlan4)loadPlan4();else loadPlan3();}
