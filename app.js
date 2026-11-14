@@ -51,7 +51,7 @@ function rebuildCargo(){
   const clearWheelhouseWidth=Math.min(w-.02,(state.cargo.wheelhouseWidth||1330)/1000);
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
-  const lowPlinthDepth=Math.max(wheelhouseDepth,(w-.92)/2);
+  const lowPlinthDepth=Math.max(wheelhouseDepth,.28);
   const wheelhouseShape=new THREE.Shape();
   const baseHalfLength=.58,archHalfLength=.40;
   const shoulderHeight=.20,archRise=.19;
