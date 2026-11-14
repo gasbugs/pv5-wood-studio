@@ -440,7 +440,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=14;
+  state.layoutVersion=15;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -532,12 +532,13 @@ function loadPlan3(){
   const centerHatchWidth=centerHatchRight-centerHatchLeft;
   const centerHatchX=(centerHatchLeft+centerHatchRight)/2;
   const makeLengthHatch=(z,direction,name)=>{
-    const hingeZ=z-direction*halfHatchDepth/2;
+    const sideDirection=-direction;
+    const hingeX=centerHatchX-sideDirection*centerHatchWidth/2;
     return {
       id:uid(),name,size:[centerHatchWidth,18,halfHatchDepth],
       pos:[centerHatchX,349,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-      openPos:[centerHatchX,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*halfHatchDepth/2,hingeZ+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*halfHatchDepth/2],
-      openRot:[-direction*hatchAngle,0,0]
+      openPos:[hingeX+sideDirection*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,349+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,z],
+      openRot:[0,0,sideDirection*hatchAngle]
     };
   };
   const frontHatchZ=bedZ-(halfHatchDepth+splitGap)/2;
@@ -581,4 +582,4 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
-if(hasPlan3&&state.layoutVersion!==14) loadPlan3();
+if(hasPlan3&&state.layoutVersion!==15) loadPlan3();
