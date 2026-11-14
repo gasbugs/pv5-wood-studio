@@ -12,7 +12,7 @@ const presets = {
 };
 const state = {
   cargo: { width: 1565, height: 1520, length: 2255, wheelhouseWidth: 1330 }, unitCost: 65000,
-  objects: [], selectedId: null, shell: true, grid: true, person: true, storageOpen: false,
+  objects: [], selectedId: null, shell: true, grid: true, person: true, storageOpen: false, layoutVersion: 0,
   personPose: {position:[0,0,0],rotationY:0,rightElbowToCabinet:false}
 };
 let renderer, scene, camera, controls, raycaster, pointer, cargoGroup, grid, selectionBox, personGroup;
@@ -431,7 +431,8 @@ function loadPlan3(){
   state.storageOpen=false;
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
-  setPersonPose([deskInnerX-60,0,desk.pos[2]-desk.size[2]/2+350],90,true);
+  setPersonPose([deskInnerX-180,0,desk.pos[2]-desk.size[2]/2+500],90,true);
+  state.layoutVersion=4;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -481,7 +482,7 @@ function loadPlan3(){
   const hatchWidth=bayWidth-20;
   const hatchDepth=bedLength-40;
   const hatchObjects=crateXs.map((x,i)=>{
-    const direction=i===0?1:-1;
+    const direction=i===0?-1:1;
     const hingeX=x-direction*hatchWidth/2;
     return {
       id:uid(),name:i===0?'좌측 침상 대형 수납 상판':'중앙 침상 대형 수납 상판',size:[hatchWidth,18,hatchDepth],
@@ -521,4 +522,5 @@ $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle
 
 loadLocal(); syncSettingsUI(); initThree();
 // Refresh a previously saved plan 3 once so its new shelf and horizontal PS5 replace the cached objects.
-if(state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===340&&o.size[1]===270&&o.size[2]===340))) loadPlan3();
+const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
+if(hasPlan3&&state.layoutVersion!==4) loadPlan3();
