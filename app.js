@@ -52,24 +52,27 @@ function rebuildCargo(){
   const wheelhouseDepth=Math.max(.05,(w-clearWheelhouseWidth)/2);
   const wheelhouseX=w/2-wheelhouseDepth/2;
   const wheelhouseShape=new THREE.Shape();
-  const baseHalfLength=.44,shoulderHalfLength=.415,archHalfLength=.40;
+  const baseHalfLength=.58,archHalfLength=.40;
   const shoulderHeight=.20,archRise=.19;
-  wheelhouseShape.moveTo(-baseHalfLength,0);
-  wheelhouseShape.lineTo(-baseHalfLength,.08);
-  wheelhouseShape.lineTo(-shoulderHalfLength,shoulderHeight);
-  wheelhouseShape.lineTo(-archHalfLength,shoulderHeight);
+  wheelhouseShape.moveTo(-archHalfLength,shoulderHeight);
   for(let i=0;i<=16;i++){
     const t=Math.PI-i*Math.PI/16;
     wheelhouseShape.lineTo(Math.cos(t)*archHalfLength,shoulderHeight+Math.sin(t)*archRise);
   }
-  wheelhouseShape.lineTo(shoulderHalfLength,shoulderHeight);
-  wheelhouseShape.lineTo(baseHalfLength,.08);
-  wheelhouseShape.lineTo(baseHalfLength,0);
+  wheelhouseShape.lineTo(-archHalfLength,shoulderHeight);
   wheelhouseShape.closePath();
   const wheelhouseGeo=new THREE.ExtrudeGeometry(wheelhouseShape,{depth:wheelhouseDepth,bevelEnabled:false,curveSegments:12});
   wheelhouseGeo.translate(0,0,-wheelhouseDepth/2);
   const wheelhouseEdgeMat=new THREE.LineBasicMaterial({color:0x505955,transparent:true,opacity:.55});
   for(const x of [-wheelhouseX,wheelhouseX]){
+    const plinth=new THREE.Mesh(new THREE.BoxGeometry(wheelhouseDepth,shoulderHeight,baseHalfLength*2),interiorMat);
+    plinth.position.set(x,.015+shoulderHeight/2,l*.22);
+    plinth.castShadow=true;
+    plinth.receiveShadow=true;
+    cargoGroup.add(plinth);
+    const plinthEdges=new THREE.LineSegments(new THREE.EdgesGeometry(plinth.geometry),wheelhouseEdgeMat);
+    plinthEdges.position.copy(plinth.position);
+    cargoGroup.add(plinthEdges);
     const wheelhouse=new THREE.Mesh(wheelhouseGeo,interiorMat);
     wheelhouse.rotation.y=Math.PI/2;
     wheelhouse.position.set(x,.015,l*.22);
@@ -140,9 +143,6 @@ function rebuildCargo(){
     const seam=new THREE.Mesh(new THREE.BoxGeometry(.009,.005,seamLength),caulkMat);
     seam.position.set(x,.028,(matFront+.02+seamRear)/2);
     cargoGroup.add(seam);
-  }
-  for(const x of [-w/2+.025,w/2-.025]){
-    const rail=new THREE.Mesh(new THREE.BoxGeometry(.035,.12,l*.82),interiorMat); rail.position.set(x,.22,0); cargoGroup.add(rail);
   }
   const bulkhead=new THREE.Mesh(new THREE.BoxGeometry(w-.08,.04,.035),interiorMat); bulkhead.rotation.x=Math.PI/2; bulkhead.position.set(0,h*.68,-l/2+.025); cargoGroup.add(bulkhead);
   addCabReference(cargoGroup,w,h,l);
