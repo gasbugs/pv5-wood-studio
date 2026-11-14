@@ -539,7 +539,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,80,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=21;
+  state.layoutVersion=22;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -643,13 +643,15 @@ function loadPlan3(){
   const hatchAngle=70;
   const hatchWidth=bayWidth-20;
   const hatchDepth=bedLength-40;
-  const makeSideHatch=(x,width,direction,name)=>{
-    const hingeX=x-direction*width/2;
+  const makeSideHatch=(x,width,hingeSide,name)=>{
+    const hingeX=x+hingeSide*width/2;
+    const centerFromHinge=-hingeSide*width/2;
+    const angle=-hingeSide*hatchAngle;
     return {
       id:uid(),name,size:[width,18,hatchDepth],
       pos:[x,429,bedZ],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-      openPos:[hingeX+direction*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*width/2,429+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*width/2,bedZ],
-      openRot:[0,0,direction*hatchAngle]
+      openPos:[hingeX+Math.cos(THREE.MathUtils.degToRad(angle))*centerFromHinge,429+Math.sin(THREE.MathUtils.degToRad(angle))*centerFromHinge,bedZ],
+      openRot:[0,0,angle]
     };
   };
   const splitGap=10;
@@ -658,14 +660,15 @@ function loadPlan3(){
   const centerHatchRight=deskInnerX-10;
   const centerHatchWidth=centerHatchRight-centerHatchLeft;
   const centerHatchX=(centerHatchLeft+centerHatchRight)/2;
-  const makeLengthHatch=(z,direction,name)=>{
-    const sideDirection=-direction;
-    const hingeX=centerHatchX-sideDirection*centerHatchWidth/2;
+  const makeLengthHatch=(z,hingeSide,name)=>{
+    const hingeX=centerHatchX+hingeSide*centerHatchWidth/2;
+    const centerFromHinge=-hingeSide*centerHatchWidth/2;
+    const angle=-hingeSide*hatchAngle;
     return {
       id:uid(),name,size:[centerHatchWidth,18,halfHatchDepth],
       pos:[centerHatchX,429,z],rot:[0,0,0],material:'birch',showOnlyWhenStorageOpen:true,
-      openPos:[hingeX+sideDirection*Math.cos(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,429+Math.sin(THREE.MathUtils.degToRad(hatchAngle))*centerHatchWidth/2,z],
-      openRot:[0,0,sideDirection*hatchAngle]
+      openPos:[hingeX+Math.cos(THREE.MathUtils.degToRad(angle))*centerFromHinge,429+Math.sin(THREE.MathUtils.degToRad(angle))*centerFromHinge,z],
+      openRot:[0,0,angle]
     };
   };
   const frontHatchZ=bedZ-(halfHatchDepth+splitGap)/2;
@@ -734,4 +737,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==21){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==22){if(hadPlan4)loadPlan4();else loadPlan3();}
