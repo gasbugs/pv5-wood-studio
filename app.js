@@ -539,7 +539,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,80,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=22;
+  state.layoutVersion=23;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -573,7 +573,9 @@ function loadPlan3(){
   state.objects.filter(o=>o.pos[2]===cabinetZ&&o.size[1]===590&&o.size[2]===cabinetDepth).forEach(panel=>{panel.size[1]=670;panel.pos[1]=365;});
   const cabinetTop=state.objects.find(o=>o.pos[2]===cabinetZ&&o.pos[1]===635&&o.size[1]===30&&o.size[2]===cabinetDepth);
   if(cabinetTop){cabinetTop.pos[1]=715;cabinetTop.name='책상 연결 왼쪽 마감 상판 · 높이 730mm';}
-  state.objects.filter(o=>o.pos[2]<cabinetZ&&o.size[0]===doorWidth&&o.size[1]===560).forEach(panel=>{panel.size[1]=670;panel.pos[1]=365;});
+  const reducedBackPanels=state.objects.filter(o=>o.pos[2]<cabinetZ&&o.size[0]===doorWidth&&o.size[1]===560);
+  state.objects=state.objects.filter(o=>!reducedBackPanels.includes(o));
+  state.objects.push({id:uid(),name:'트렁크 수납장 침상 쪽 전체 폭 고정 뒷판',size:[cabinetWidth,670,18],pos:[0,365,cabinetFront-9],rot:[0,0,0],material:'birch'});
   state.objects.filter(o=>(o.material==='black'||o.material==='screen')&&o.pos[1]>=667.5&&o.size[1]!==18).forEach(device=>{device.pos[1]+=80;});
   state.objects.filter(o=>o.shape==='beanbag').forEach(beanbag=>{beanbag.pos[1]+=80;});
   const rearFixedSideWidth=(cabinetWidth-rearDoorSpan)/2;
@@ -592,7 +594,6 @@ function loadPlan3(){
     door.size[1]=620;door.pos[1]=350;delete door.shape;
     if(door.pos[0]===doorStep){door.shape='double-rounded-opening';door.centerGap=36;}
   });
-  state.objects.filter(o=>o.pos[0]===doorStep&&o.size[1]===670&&o.size[2]===20&&o.pos[2]<cabinetZ).forEach(panel=>{panel.shape='double-rounded-opening';panel.centerGap=36;});
   cabinetDoors.forEach(door=>{
     const hingeSide=door.pos[0]<0?-1:1;
     const outward=door.pos[2]>cabinetZ?1:-1;
@@ -737,4 +738,4 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==22){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==23){if(hadPlan4)loadPlan4();else loadPlan3();}
