@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
-const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, screen: 0x24343d, white: 0xe8e7e2 };
-const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', screen: '모니터 화면', white: '화이트 기기' };
+const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, linenWall: 0xd8d0c3, sageWall: 0x87938a, taupeWall: 0x8c7d70, cinemaWall: 0x252a30, screen: 0x24343d, white: 0xe8e7e2 };
+const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', linenWall: '리넨 반투명 벽', sageWall: '세이지 반투명 벽', taupeWall: '토프 반투명 벽', cinemaWall: '차콜 반투명 벽', screen: '모니터 화면', white: '화이트 기기' };
 const presets = {
   floor: { name: '바닥 판', size: [1200, 18, 900], pos: [0, 40, 0] },
   wall: { name: '세로 칸막이', size: [18, 700, 900], pos: [-450, 370, 0] },
@@ -225,7 +225,7 @@ function setPersonPose(position,rotationY,rightElbowToCabinet=false){
   updatePerson();
 }
 
-function panelMaterial(kind){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:(kind==='fabric'||kind==='burgundy')?.92:.62,metalness:0}); }
+function panelMaterial(kind,opacity=1){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:(kind==='fabric'||kind==='burgundy')?.92:.62,metalness:0,transparent:opacity<1,opacity,depthWrite:opacity>=1,side:THREE.DoubleSide}); }
 function geometryFor(obj){
   if(obj.shape==='rounded-opening'||obj.shape==='double-rounded-opening'){
     const width=obj.size[0]/1000;
@@ -304,7 +304,7 @@ function geometryFor(obj){
   return new THREE.BoxGeometry(obj.size[0]/1000,obj.size[1]/1000,obj.size[2]/1000);
 }
 function makeMesh(obj){
-  const geo=geometryFor(obj); const mesh=new THREE.Mesh(geo,panelMaterial(obj.material)); mesh.castShadow=true; mesh.receiveShadow=true; mesh.userData.id=obj.id;
+  const geo=geometryFor(obj); const mesh=new THREE.Mesh(geo,panelMaterial(obj.material,obj.opacity??1)); mesh.castShadow=(obj.opacity??1)>=.5; mesh.receiveShadow=true; mesh.userData.id=obj.id;
   const pos=state.storageOpen&&obj.openPos?obj.openPos:obj.pos;
   const rot=state.storageOpen&&obj.openRot?obj.openRot:obj.rot;
   mesh.position.set(pos[0]/1000,pos[1]/1000,pos[2]/1000); mesh.rotation.set(...rot.map(THREE.MathUtils.degToRad));
@@ -392,6 +392,16 @@ function rearDeskDevices(desk){
   return devices;
 }
 
+function sideWallObjects(material,opacity,label){
+  const wallDepth=state.cargo.length-80;
+  const wallHeight=state.cargo.height-40;
+  return [
+    {id:uid(),name:`${label} 왼쪽 반투명 벽`,size:[24,wallHeight,wallDepth],pos:[-state.cargo.width/2+12,wallHeight/2,0],rot:[0,0,0],material,opacity},
+    {id:uid(),name:`${label} 오른쪽 반투명 벽`,size:[24,wallHeight,wallDepth],pos:[state.cargo.width/2-12,wallHeight/2,0],rot:[0,0,0],material,opacity},
+    {id:uid(),name:`${label} 천장 반투명 패널`,size:[state.cargo.width-48,24,wallDepth],pos:[0,state.cargo.height-12,0],rot:[0,0,0],material,opacity}
+  ];
+}
+
 function loadPlan1(){
   const rear=state.cargo.length/2;
   const deskWidth=state.cargo.width-100;
@@ -427,6 +437,7 @@ function loadPlan1(){
   state.objects[6].size[1]=320;
   state.objects[6].pos[1]=160;
   state.objects.push(...rearDeskDevices(state.objects[0]));
+  state.objects.push(...sideWallObjects('linenWall',.16,'1안 리넨'));
   setPersonPose([-deskWidth/4,10,deskInnerEdge-330],0);
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();saveLocal();
@@ -478,12 +489,14 @@ function loadPlan2(includeDevices=true){
   state.objects[7].size[1]=320;
   state.objects[7].pos[1]=160;
   if(includeDevices!==false) state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
+  state.objects.push(...sideWallObjects('sageWall',.15,'2안 세이지'));
   setPersonPose([deskInnerX-220,10,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
   state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id:state.objects[0].id;
   rebuildObjects();saveLocal();
 }
 function loadPlan3(){
   loadPlan2(false);
+  state.objects.filter(o=>o.material==='sageWall').forEach(o=>{o.material='taupeWall';o.name=o.name.replace('2안 세이지','3안 웜 토프');o.opacity=.16;});
   const rear=state.cargo.length/2;
   const cabinetClearance=50;
   const cabinetWidth=state.cargo.width-cabinetClearance*2;
@@ -545,7 +558,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,10,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=29;
+  state.layoutVersion=31;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -716,9 +729,18 @@ function loadPlan4(){
     rot:[0,0,0],material:'walnut'
   };
   state.objects.forEach(o=>{if(o.material==='birch'||o.material==='oak')o.material='walnut';else if(o.material==='fabric')o.material='burgundy';});
-  state.objects=state.objects.filter(o=>!o.name.startsWith('왼쪽 벽 세움 쿠션')&&!o.name.startsWith('침상 대형 빈백 쿠션'));
-  state.objects.push(backrest);
-  state.layoutName='4안 · 영화관 월넛 + 버건디 + 수직 등받이';
+  state.objects=state.objects.filter(o=>!o.name.startsWith('침상 대형 빈백 쿠션')&&!['linenWall','sageWall','taupeWall'].includes(o.material));
+  const cinemaCushion=state.objects.find(o=>o.name.startsWith('왼쪽 벽 세움 쿠션'));
+  if(cinemaCushion){
+    cinemaCushion.name='수직 등받이 앞 버건디 영화관 쿠션';
+    cinemaCushion.pos=[backrest.pos[0]+165,685,backrest.pos[2]];
+    cinemaCushion.rot=[0,0,0];
+  }
+  state.objects.push(
+    backrest,
+    ...sideWallObjects('cinemaWall',.18,'4안 차콜')
+  );
+  state.layoutName='4안 · 영화관 월넛 + 버건디 쿠션 + 차콜 벽';
   state.selectedId=backrest.id;
   rebuildObjects();
   saveLocal();
@@ -746,4 +768,7 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==29){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==31){if(hadPlan4)loadPlan4();else loadPlan3();}
+const hasPlanWalls=state.objects.some(o=>['linenWall','sageWall','taupeWall','cinemaWall'].includes(o.material));
+if(!hasPlanWalls&&String(state.layoutName||'').startsWith('1'))loadPlan1();
+if(!hasPlanWalls&&String(state.layoutName||'').startsWith('2'))loadPlan2();
