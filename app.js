@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
-const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, cinemaOak: 0x72513a, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, linenWall: 0xd8d0c3, sageWall: 0x87938a, taupeWall: 0x8c7d70, cinemaWall: 0x252a30, screen: 0x24343d, white: 0xe8e7e2 };
-const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', cinemaOak: '스모크드 오크', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', linenWall: '리넨 반투명 벽', sageWall: '세이지 반투명 벽', taupeWall: '토프 반투명 벽', cinemaWall: '차콜 반투명 벽', screen: '모니터 화면', white: '화이트 기기' };
+const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, cinemaOak: 0x8a6547, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, cinemaFabric: 0x24384f, linenWall: 0xd8d0c3, sageWall: 0x87938a, taupeWall: 0x8c7d70, cinemaWall: 0x596063, screen: 0x24343d, white: 0xe8e7e2 };
+const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', cinemaOak: '모던 스모크드 오크', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', cinemaFabric: '딥 네이비 패브릭', linenWall: '리넨 반투명 벽', sageWall: '세이지 반투명 벽', taupeWall: '토프 반투명 벽', cinemaWall: '웜 그라파이트 반투명 벽', screen: '모니터 화면', white: '화이트 기기' };
 const presets = {
   floor: { name: '바닥 판', size: [1200, 18, 900], pos: [0, 40, 0] },
   wall: { name: '세로 칸막이', size: [18, 700, 900], pos: [-450, 370, 0] },
@@ -225,7 +225,7 @@ function setPersonPose(position,rotationY,rightElbowToCabinet=false){
   updatePerson();
 }
 
-function panelMaterial(kind,opacity=1){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:(kind==='fabric'||kind==='burgundy')?.92:.62,metalness:0,transparent:opacity<1,opacity,depthWrite:opacity>=1,side:THREE.DoubleSide}); }
+function panelMaterial(kind,opacity=1){ return new THREE.MeshStandardMaterial({color:materialColors[kind]||materialColors.birch,roughness:(kind==='fabric'||kind==='burgundy'||kind==='cinemaFabric')?.92:.62,metalness:0,transparent:opacity<1,opacity,depthWrite:opacity>=1,side:THREE.DoubleSide}); }
 function geometryFor(obj){
   if(obj.shape==='rounded-opening'||obj.shape==='double-rounded-opening'){
     const width=obj.size[0]/1000;
@@ -557,7 +557,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,10,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=33;
+  state.layoutVersion=34;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -727,19 +727,19 @@ function loadPlan4(){
     pos:[bedFrame.pos[0]-bedFrame.size[0]/2+55,660,(bedRear+deskFront)/2],
     rot:[0,0,0],material:'cinemaOak'
   };
-  state.objects.forEach(o=>{if(o.material==='birch'||o.material==='oak')o.material='cinemaOak';else if(o.material==='fabric')o.material='burgundy';});
+  state.objects.forEach(o=>{if(o.material==='birch'||o.material==='oak')o.material='cinemaOak';else if(o.material==='fabric')o.material='cinemaFabric';});
   state.objects=state.objects.filter(o=>!o.name.startsWith('침상 대형 빈백 쿠션')&&!['linenWall','sageWall','taupeWall'].includes(o.material));
   const cinemaCushion=state.objects.find(o=>o.name.startsWith('왼쪽 벽 세움 쿠션'));
   if(cinemaCushion){
-    cinemaCushion.name='수직 등받이 앞 버건디 영화관 쿠션';
+    cinemaCushion.name='수직 등받이 앞 딥 네이비 영화관 쿠션';
     cinemaCushion.pos=[backrest.pos[0]+165,685,backrest.pos[2]];
     cinemaCushion.rot=[0,0,0];
   }
   state.objects.push(
     backrest,
-    ...sideWallObjects('cinemaWall',.27,'4안 차콜')
+    ...sideWallObjects('cinemaWall',.27,'4안 웜 그라파이트')
   );
-  state.layoutName='4안 · 영화관 월넛 + 버건디 쿠션 + 차콜 벽';
+  state.layoutName='4안 · 모던 스모크드 오크 + 딥 네이비 + 웜 그라파이트';
   state.selectedId=backrest.id;
   rebuildObjects();
   saveLocal();
@@ -767,7 +767,7 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==33){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==34){if(hadPlan4)loadPlan4();else loadPlan3();}
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
