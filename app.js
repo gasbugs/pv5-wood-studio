@@ -397,8 +397,7 @@ function sideWallObjects(material,opacity,label){
   const wallHeight=state.cargo.height-40;
   return [
     {id:uid(),name:`${label} 왼쪽 반투명 벽`,size:[24,wallHeight,wallDepth],pos:[-state.cargo.width/2+12,wallHeight/2,0],rot:[0,0,0],material,opacity},
-    {id:uid(),name:`${label} 오른쪽 반투명 벽`,size:[24,wallHeight,wallDepth],pos:[state.cargo.width/2-12,wallHeight/2,0],rot:[0,0,0],material,opacity},
-    {id:uid(),name:`${label} 천장 반투명 패널`,size:[state.cargo.width-48,24,wallDepth],pos:[0,state.cargo.height-12,0],rot:[0,0,0],material,opacity}
+    {id:uid(),name:`${label} 오른쪽 반투명 벽`,size:[24,wallHeight,wallDepth],pos:[state.cargo.width/2-12,wallHeight/2,0],rot:[0,0,0],material,opacity}
   ];
 }
 
@@ -437,7 +436,7 @@ function loadPlan1(){
   state.objects[6].size[1]=320;
   state.objects[6].pos[1]=160;
   state.objects.push(...rearDeskDevices(state.objects[0]));
-  state.objects.push(...sideWallObjects('linenWall',.16,'1안 리넨'));
+  state.objects.push(...sideWallObjects('linenWall',.24,'1안 리넨'));
   setPersonPose([-deskWidth/4,10,deskInnerEdge-330],0);
   state.selectedId=state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id;
   rebuildObjects();saveLocal();
@@ -489,14 +488,14 @@ function loadPlan2(includeDevices=true){
   state.objects[7].size[1]=320;
   state.objects[7].pos[1]=160;
   if(includeDevices!==false) state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
-  state.objects.push(...sideWallObjects('sageWall',.15,'2안 세이지'));
+  state.objects.push(...sideWallObjects('sageWall',.23,'2안 세이지'));
   setPersonPose([deskInnerX-220,10,state.objects[0].pos[2]-state.objects[0].size[2]/2+350],90);
   state.selectedId=includeDevices!==false?state.objects.find(o=>o.name.startsWith('책상 왼쪽 27인치')).id:state.objects[0].id;
   rebuildObjects();saveLocal();
 }
 function loadPlan3(){
   loadPlan2(false);
-  state.objects.filter(o=>o.material==='sageWall').forEach(o=>{o.material='taupeWall';o.name=o.name.replace('2안 세이지','3안 웜 토프');o.opacity=.16;});
+  state.objects.filter(o=>o.material==='sageWall').forEach(o=>{o.material='taupeWall';o.name=o.name.replace('2안 세이지','3안 웜 토프');o.opacity=.24;});
   const rear=state.cargo.length/2;
   const cabinetClearance=50;
   const cabinetWidth=state.cargo.width-cabinetClearance*2;
@@ -558,7 +557,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,10,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=31;
+  state.layoutVersion=32;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -738,7 +737,7 @@ function loadPlan4(){
   }
   state.objects.push(
     backrest,
-    ...sideWallObjects('cinemaWall',.18,'4안 차콜')
+    ...sideWallObjects('cinemaWall',.27,'4안 차콜')
   );
   state.layoutName='4안 · 영화관 월넛 + 버건디 쿠션 + 차콜 벽';
   state.selectedId=backrest.id;
@@ -768,7 +767,10 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==31){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==32){if(hadPlan4)loadPlan4();else loadPlan3();}
+const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
+if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
+if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
 const hasPlanWalls=state.objects.some(o=>['linenWall','sageWall','taupeWall','cinemaWall'].includes(o.material));
 if(!hasPlanWalls&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(!hasPlanWalls&&String(state.layoutName||'').startsWith('2'))loadPlan2();
