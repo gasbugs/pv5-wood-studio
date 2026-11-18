@@ -312,7 +312,7 @@ function makeMesh(obj){
   if(state.row2Folded&&obj.hideWhenRow2Folded) mesh.visible=false;
   scene.add(mesh); meshes.set(obj.id,mesh); return mesh;
 }
-function rebuildObjects(){ const fold=$('toggleRow2Fold'); fold.parentElement.style.display=state.objects.some(o=>o.foldedPos)?'':'none'; fold.checked=Boolean(state.row2Folded); const rotate=$('togglePlan5Rotation'); rotate.parentElement.style.display=state.objects.some(o=>o.plan5Furniture)?'':'none'; rotate.checked=state.plan5Rotated??true; meshes.forEach(m=>scene.remove(m)); meshes.clear(); state.objects.forEach(makeMesh); renderObjectList(); selectObject(state.selectedId,false); updateSummary(); }
+function rebuildObjects(){ const fold=$('toggleRow2Fold'); fold.parentElement.style.display=state.objects.some(o=>o.foldedPos)?'':'none'; fold.checked=Boolean(state.row2Folded); const rotate=$('togglePlan5Rotation'); rotate.parentElement.style.display=/^[1-5]안/.test(state.layoutName||'')&&state.objects.length?'':'none'; rotate.checked=isPlan5()?(state.plan5Rotated??true):Boolean(state.furnitureRotated); meshes.forEach(m=>scene.remove(m)); meshes.clear(); state.objects.forEach(makeMesh); renderObjectList(); selectObject(state.selectedId,false); updateSummary(); }
 function syncMesh(obj){ const old=meshes.get(obj.id); if(old){scene.remove(old);meshes.delete(obj.id);} makeMesh(obj); selectObject(obj.id,false); updateSummary(); renderObjectList(); saveLocal(); }
 
 function addObject(type){ const p=presets[type]; const count=state.objects.filter(o=>o.name.startsWith(p.name)).length+1; const obj={id:uid(),name:`${p.name} ${count}`,size:[...p.size],pos:[...p.pos],rot:[0,0,0],material:'birch'}; state.objects.push(obj); makeMesh(obj); renderObjectList(); selectObject(obj.id); updateSummary(); saveLocal(); }
@@ -403,6 +403,7 @@ function sideWallObjects(material,opacity,label){
 }
 
 function loadPlan1(){
+  state.furnitureRotated=false;
   const rear=state.cargo.length/2;
   const deskWidth=state.cargo.width-100;
   const deskDepth=700;
@@ -443,6 +444,7 @@ function loadPlan1(){
   rebuildObjects();saveLocal();
 }
 function loadPlan2(includeDevices=true){
+  state.furnitureRotated=false;
   const rear=state.cargo.length/2;
   const doorOpening=775;
   const doorFront=-rear+180;
@@ -818,15 +820,21 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
   return parts;
 }
 
-function rotatePlan5Furniture(){
-  const turnPosition=([x,y,z])=>[-x,y,state.plan5AxisZ-z];
-  for(const part of state.objects.filter(o=>o.plan5Furniture)){
+function isPlan5(){ return /^5안/.test(state.layoutName||''); }
+
+function rotatePlanFurniture(){
+  const plan5=isPlan5();
+  const axisZ=plan5?state.plan5AxisZ:0;
+  const turnPosition=([x,y,z])=>[-x,y,axisZ-z];
+  const turnAngle=rot=>{rot[0]=-rot[0];rot[1]=(rot[1]+180)%360;};
+  for(const part of state.objects){
+    if(plan5?!part.plan5Furniture:/Wall$/.test(part.material)) continue;
     part.pos=turnPosition(part.pos);
-    part.rot[1]=(part.rot[1]+180)%360;
+    turnAngle(part.rot);
     if(part.openPos) part.openPos=turnPosition(part.openPos);
-    if(part.openRot) part.openRot[1]=(part.openRot[1]+180)%360;
+    if(part.openRot) turnAngle(part.openRot);
   }
-  if(state.personPose.plan5WorkSeat){
+  if(state.personPose&&(!plan5||state.personPose.plan5WorkSeat)){
     state.personPose.position=turnPosition(state.personPose.position);
     state.personPose.rotationY=(state.personPose.rotationY+180)%360;
   }
@@ -893,7 +901,7 @@ function loadPlan5(){
     state.personPose.plan5WorkSeat=true;
   }
   else setPersonPose([0,30,seatZ-30],180);
-  if(state.plan5Rotated??true) rotatePlan5Furniture();
+  if(state.plan5Rotated??true) rotatePlanFurniture();
   updatePerson();
   state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
   rebuildObjects();
@@ -915,9 +923,11 @@ $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;up
 $('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('toggleRow2Fold').addEventListener('change',e=>{state.row2Folded=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('togglePlan5Rotation').addEventListener('change',e=>{
-  if(e.target.checked===(state.plan5Rotated??true)) return;
-  rotatePlan5Furniture();
-  state.plan5Rotated=e.target.checked;
+  const plan5=isPlan5();
+  if(e.target.checked===(plan5?(state.plan5Rotated??true):Boolean(state.furnitureRotated))) return;
+  rotatePlanFurniture();
+  if(plan5) state.plan5Rotated=e.target.checked;
+  else state.furnitureRotated=e.target.checked;
   rebuildObjects();
   updatePerson();
   saveLocal();
