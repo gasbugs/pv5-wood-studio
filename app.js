@@ -745,6 +745,51 @@ function loadPlan4(){
   saveLocal();
 }
 
+function plan5Storage(deskRear, deskInnerX){
+  const parts=[];
+  const add=(name,size,pos,material='cinemaOak',openPos)=>parts.push({id:uid(),name,size,pos,material,rot:[0,0,0],openPos});
+  const width=Math.min(840,state.cargo.width-100);
+  const depth=350;
+  const z=deskRear-depth/2;
+  const board=18;
+  add('후면 하부 수납장 바닥',[width,board,depth],[0,board/2,z]);
+  for(const x of [-width/2+9,0,width/2-9]){
+    add('후면 하부 수납장 세로판',[board,612,depth],[x,324,z]);
+  }
+  add('후면 하부 수납장 뒷판',[width,612,board],[0,324,deskRear-depth+9]);
+  const extensionWidth=deskInnerX+width/2;
+  if(extensionWidth>0){
+    add('후면 수납장 상판',[extensionWidth,30,depth],[(deskInnerX-width/2)/2,645,z]);
+  }
+  for(const x of [-width/4,width/4]){
+    const drawerWidth=width/2-24;
+    const drawerZ=deskRear-145;
+    const faceWidth=width/2-4;
+    const drawerPart=(name,size,pos,material)=>add(name,size,pos,material,[pos[0],pos[1],pos[2]+250]);
+    drawerPart('후면 인출 서랍 바닥',[drawerWidth,18,260],[x,103,drawerZ]);
+    for(const edge of [-1,1]){
+      drawerPart('후면 인출 서랍 측판',[18,160,260],[x+edge*(drawerWidth/2-9),192,drawerZ]);
+    }
+    drawerPart('후면 인출 서랍 뒤판',[drawerWidth-36,160,18],[x,192,drawerZ-121]);
+    drawerPart('후면 인출 서랍 앞판',[faceWidth,255,18],[x,190,deskRear+9]);
+    drawerPart('후면 인출 서랍 손잡이',[100,18,18],[x,260,deskRear+27],'black');
+  }
+  add('후면 하부 수납장 중간 선반',[width-36,18,depth-18],[0,335,z+9]);
+  const wallDepth=200, wallLength=550, wallHeight=360;
+  const wallX=-state.cargo.width/2+30+wallDepth/2;
+  const wallY=state.cargo.height-80-wallHeight/2;
+  const wallZ=deskRear-50-wallLength/2;
+  for(const offset of [-1,0,1]){
+    add('왼쪽 벽장 가로판',[wallDepth,board,wallLength],[wallX,wallY+offset*(wallHeight/2-9),wallZ]);
+  }
+  for(const edge of [-1,1]){
+    add('왼쪽 벽장 측판',[wallDepth,wallHeight-36,board],[wallX,wallY,wallZ+edge*(wallLength/2-9)]);
+  }
+  add('왼쪽 벽장 뒷판',[board,wallHeight-36,wallLength-36],[wallX-wallDepth/2+9,wallY,wallZ]);
+  add('왼쪽 벽장 낙하 방지턱',[board,45,wallLength-36],[wallX+wallDepth/2-9,wallY-wallHeight/2+40,wallZ]);
+  return parts;
+}
+
 function loadPlan5(){
   const rear=state.cargo.length/2;
   const deskDepth=700;
@@ -762,7 +807,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=36;
+  state.layoutVersion=37;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -780,6 +825,7 @@ function loadPlan5(){
   ];
   state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
   state.objects.push(...sideWallObjects('passengerWall',.22,'5안 패신저 그레이'));
+  state.objects.push(...plan5Storage(deskRear,deskInnerX));
   setPersonPose([0,30,seatZ-30],180);
   state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
   rebuildObjects();
@@ -809,7 +855,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<36)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<37)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
