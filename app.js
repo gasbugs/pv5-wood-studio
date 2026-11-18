@@ -757,9 +757,20 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
     add('후면 하부 수납장 세로판',[board,612,depth],[x,324,z]);
   }
   add('후면 하부 수납장 뒷판',[width,612,board],[0,324,deskRear-depth+9]);
-  const extensionWidth=deskInnerX+width/2;
+  const cabinetLeft=-state.cargo.width/2+24;
+  const extensionWidth=deskInnerX-cabinetLeft;
   if(extensionWidth>0){
-    add('후면 수납장 상판',[extensionWidth,30,depth],[(deskInnerX-width/2)/2,645,z]);
+    add('후면 전폭 수납장 상판',[extensionWidth,30,depth],[(deskInnerX+cabinetLeft)/2,645,z]);
+  }
+  const wingWidth=-width/2-cabinetLeft;
+  if(wingWidth>0){
+    for(const side of [-1,1]){
+      const x=side*(width/2+wingWidth/2);
+      add('트렁크 좌우 책장 선반',[wingWidth,18,depth],[x,350,z]);
+      add('트렁크 좌우 책장 뒷판',[wingWidth,271,18],[x,494.5,deskRear-depth+9]);
+      add('트렁크 책장 바깥 측판',[18,289,depth],[side*(-cabinetLeft-9),485.5,z]);
+      add('트렁크 책장 낙하 방지턱',[wingWidth,30,18],[x,374,deskRear-9]);
+    }
   }
   for(const x of [-width/4,width/4]){
     const drawerWidth=width/2-24;
@@ -785,6 +796,11 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
     add('책장 아래 업무용 좌방석',[450,60,benchLength],[benchX,380,benchZ],'cinemaFabric');
     add('업무용 벤치 안쪽 지지판',[18,320,benchLength],[benchX+216,160,benchZ]);
     add('업무용 벤치 벽쪽 지지판',[18,190,benchLength],[benchX-216,225,benchZ]);
+    const deskBenchX=deskInnerX-165;
+    add('책상 쪽 업무용 벤치 상판',[450,30,benchLength],[deskBenchX,335,benchZ]);
+    add('책상 쪽 복제 좌방석',[450,60,benchLength],[deskBenchX,380,benchZ],'cinemaFabric');
+    add('책상 쪽 벤치 지지판',[18,320,benchLength],[deskBenchX+216,160,benchZ]);
+    add('책상 쪽 벤치 안쪽 지지판',[18,320,benchLength],[deskBenchX-216,160,benchZ]);
   }
   const wallDepth=200, wallLength=deskRear-20-Math.max(benchFront,deskRear-1100), wallHeight=360;
   const wallX=-state.cargo.width/2+30+wallDepth/2;
@@ -818,7 +834,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=39;
+  state.layoutVersion=40;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -870,7 +886,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<39)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<40)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
