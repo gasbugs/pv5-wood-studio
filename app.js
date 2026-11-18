@@ -755,21 +755,22 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
   const board=18;
   add('후면 하부 수납장 바닥',[width,board,depth],[0,board/2,z]);
   for(const x of [-width/2+9,0,width/2-9]){
-    add('후면 하부 수납장 세로판',[board,612,depth],[x,324,z]);
+    add('후면 하부 수납장 세로판',[board,752,depth],[x,394,z]);
   }
-  add('후면 하부 수납장 뒷판',[width,612,board],[0,324,deskRear-depth+9]);
+  add('후면 하부 수납장 뒷판',[width,752,board],[0,394,deskRear-depth+9]);
   const cabinetLeft=-state.cargo.width/2+24;
   const extensionWidth=deskInnerX-cabinetLeft;
   if(extensionWidth>0){
-    add('후면 전폭 수납장 상판',[extensionWidth,30,depth],[(deskInnerX+cabinetLeft)/2,645,z]);
+    add('후면 전폭 수납장 상판',[extensionWidth,30,depth],[(deskInnerX+cabinetLeft)/2,785,z]);
   }
   const wingWidth=-width/2-cabinetLeft;
   if(wingWidth>0){
     for(const side of [-1,1]){
       const x=side*(width/2+wingWidth/2);
       add('트렁크 좌우 책장 선반',[wingWidth,18,depth],[x,350,z]);
-      add('트렁크 좌우 책장 뒷판',[wingWidth,271,18],[x,494.5,deskRear-depth+9]);
-      add('트렁크 책장 바깥 측판',[18,289,depth],[side*(-cabinetLeft-9),485.5,z]);
+      add('트렁크 좌우 책장 뒷판',[wingWidth,411,18],[x,564.5,deskRear-depth+9]);
+      add('트렁크 책장 바깥 측판',[18,429,depth],[side*(-cabinetLeft-9),555.5,z]);
+      add('트렁크 책장 바닥까지 하부 마감판',[wingWidth,341,18],[x,170.5,deskRear+9]);
       add('트렁크 책장 낙하 방지턱',[wingWidth,30,18],[x,374,deskRear-9]);
     }
   }
@@ -794,14 +795,14 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
     const benchX=-state.cargo.width/2+24+225;
     const benchZ=(benchFront+benchRear)/2;
     add('책장 아래 업무용 벤치 상판',[450,30,benchLength],[benchX,335,benchZ]);
-    const bookcaseHeight=state.cargo.height-350;
+    const bookcaseHeight=Math.min(state.cargo.height,1050)-350;
     if(bookcaseHeight>100){
       for(const edge of [-1,1]){
         add('운전석 쪽 책장 측판',[450,bookcaseHeight,18],[benchX,350+bookcaseHeight/2,benchZ+edge*(benchLength/2-9)]);
       }
       add('운전석 쪽 책장 뒷판',[18,bookcaseHeight,benchLength-36],[benchX-216,350+bookcaseHeight/2,benchZ]);
-      for(let level=1;level<=4;level++){
-        const y=350+level*(bookcaseHeight-18)/4;
+      for(let level=1;level<=2;level++){
+        const y=350+level*(bookcaseHeight-18)/2;
         add('운전석 쪽 책장 선반',[432,18,benchLength-36],[benchX+9,y+9,benchZ]);
       }
     }
@@ -813,18 +814,6 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
     add('책상 쪽 벤치 지지판',[18,460,benchLength],[deskBenchX+216,230,benchZ]);
     add('책상 쪽 벤치 안쪽 지지판',[18,460,benchLength],[deskBenchX-216,230,benchZ]);
   }
-  const wallDepth=200, wallLength=deskRear-20-Math.max(benchRear,deskRear-1100), wallHeight=360;
-  const wallX=-state.cargo.width/2+30+wallDepth/2;
-  const wallY=state.cargo.height-80-wallHeight/2;
-  const wallZ=deskRear-20-wallLength/2;
-  for(const offset of [-1,0,1]){
-    add('왼쪽 벽장 가로판',[wallDepth,board,wallLength],[wallX,wallY+offset*(wallHeight/2-9),wallZ]);
-  }
-  for(const edge of [-1,1]){
-    add('왼쪽 벽장 측판',[wallDepth,wallHeight-36,board],[wallX,wallY,wallZ+edge*(wallLength/2-9)]);
-  }
-  add('왼쪽 벽장 뒷판',[board,wallHeight-36,wallLength-36],[wallX-wallDepth/2+9,wallY,wallZ]);
-  add('왼쪽 벽장 낙하 방지턱',[board,45,wallLength-36],[wallX+wallDepth/2-9,wallY-wallHeight/2+40,wallZ]);
   return parts;
 }
 
@@ -845,7 +834,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=43;
+  state.layoutVersion=44;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -908,7 +897,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<43)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<44)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
