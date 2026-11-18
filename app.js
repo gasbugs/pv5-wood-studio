@@ -216,7 +216,7 @@ function updatePerson(){
   const pose=state.personPose||{position:[0,0,0],rotationY:0};
   personGroup.position.set(...pose.position.map(v=>v/1000));
   personGroup.rotation.set(0,THREE.MathUtils.degToRad(pose.rotationY||0),0);
-  personGroup.visible=state.person&&!state.storageOpen;
+  personGroup.visible=state.person&&!state.storageOpen&&!(state.row2Folded&&state.objects.some(o=>o.foldedPos));
 }
 
 function setPersonPose(position,rotationY,rightElbowToCabinet=false){
@@ -305,13 +305,14 @@ function geometryFor(obj){
 }
 function makeMesh(obj){
   const geo=geometryFor(obj); const mesh=new THREE.Mesh(geo,panelMaterial(obj.material,obj.opacity??1)); mesh.castShadow=(obj.opacity??1)>=.5; mesh.receiveShadow=true; mesh.userData.id=obj.id;
-  const pos=state.storageOpen&&obj.openPos?obj.openPos:obj.pos;
-  const rot=state.storageOpen&&obj.openRot?obj.openRot:obj.rot;
+  const pos=(state.row2Folded&&obj.foldedPos)||(state.storageOpen&&obj.openPos)||obj.pos;
+  const rot=(state.row2Folded&&obj.foldedRot)||(state.storageOpen&&obj.openRot)||obj.rot;
   mesh.position.set(pos[0]/1000,pos[1]/1000,pos[2]/1000); mesh.rotation.set(...rot.map(THREE.MathUtils.degToRad));
   mesh.visible=!(state.storageOpen&&obj.hideWhenStorageOpen)&&!(!state.storageOpen&&obj.showOnlyWhenStorageOpen)&&!(state.storageOpen&&obj.material==='fabric');
+  if(state.row2Folded&&obj.hideWhenRow2Folded) mesh.visible=false;
   scene.add(mesh); meshes.set(obj.id,mesh); return mesh;
 }
-function rebuildObjects(){ meshes.forEach(m=>scene.remove(m)); meshes.clear(); state.objects.forEach(makeMesh); renderObjectList(); selectObject(state.selectedId,false); updateSummary(); }
+function rebuildObjects(){ const fold=$('toggleRow2Fold'); fold.parentElement.style.display=state.objects.some(o=>o.foldedPos)?'':'none'; fold.checked=Boolean(state.row2Folded); meshes.forEach(m=>scene.remove(m)); meshes.clear(); state.objects.forEach(makeMesh); renderObjectList(); selectObject(state.selectedId,false); updateSummary(); }
 function syncMesh(obj){ const old=meshes.get(obj.id); if(old){scene.remove(old);meshes.delete(obj.id);} makeMesh(obj); selectObject(obj.id,false); updateSummary(); renderObjectList(); saveLocal(); }
 
 function addObject(type){ const p=presets[type]; const count=state.objects.filter(o=>o.name.startsWith(p.name)).length+1; const obj={id:uid(),name:`${p.name} ${count}`,size:[...p.size],pos:[...p.pos],rot:[0,0,0],material:'birch'}; state.objects.push(obj); makeMesh(obj); renderObjectList(); selectObject(obj.id); updateSummary(); saveLocal(); }
@@ -844,7 +845,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=41;
+  state.layoutVersion=42;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -867,6 +868,15 @@ function loadPlan5(){
   state.objects.push(...sideDeskDevices(state.objects[0],deskInnerX));
   state.objects.push(...sideWallObjects('passengerWall',.22,'5안 패신저 그레이'));
   state.objects.push(...plan5Storage(deskRear,deskInnerX,backrestZ));
+  for(const part of state.objects.filter(o=>o.material==='passengerSeat')){
+    const [x,y]=part.pos;
+    if(y===380) part.foldedPos=[x,285,seatZ];
+    if(y===720){
+      part.foldedPos=[x,380,backrestZ-300];
+      part.foldedRot=[-90,0,0];
+    }
+    if(y===1090) part.hideWhenRow2Folded=true;
+  }
   setPersonPose([0,30,seatZ-30],180);
   state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
   rebuildObjects();
@@ -886,6 +896,7 @@ $('deleteObject').addEventListener('click',deleteSelected);$('duplicateObject').
 $('toggleShell').addEventListener('change',e=>{state.shell=e.target.checked;cargoGroup.visible=state.shell;saveLocal();});$('toggleGrid').addEventListener('change',e=>{state.grid=e.target.checked;grid.visible=state.grid;saveLocal();});
 $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;updatePerson();saveLocal();});
 $('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
+$('toggleRow2Fold').addEventListener('change',e=>{state.row2Folded=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> 설계를 저장했습니다';setTimeout(saveLocal,1800);});
 $('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('loadPlan4').addEventListener('click',loadPlan4);$('loadPlan5').addEventListener('click',loadPlan5);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
 $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle('collapsed');$('cargoToggle').classList.toggle('closed');});
@@ -896,7 +907,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<41)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<42)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
