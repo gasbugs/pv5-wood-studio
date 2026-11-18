@@ -216,7 +216,7 @@ function updatePerson(){
   const pose=state.personPose||{position:[0,0,0],rotationY:0};
   personGroup.position.set(...pose.position.map(v=>v/1000));
   personGroup.rotation.set(0,THREE.MathUtils.degToRad(pose.rotationY||0),0);
-  personGroup.visible=state.person&&!state.storageOpen&&!(state.row2Folded&&state.objects.some(o=>o.foldedPos));
+  personGroup.visible=state.person&&!state.storageOpen;
 }
 
 function setPersonPose(position,rotationY,rightElbowToCabinet=false){
@@ -808,11 +808,12 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
     }
     add('업무용 벤치 안쪽 지지판',[18,320,benchLength],[benchX+216,160,benchZ]);
     add('업무용 벤치 벽쪽 지지판',[18,190,benchLength],[benchX-216,225,benchZ]);
-    const deskBenchX=deskInnerX-165;
-    add('책상 쪽 업무용 벤치 상판',[450,30,benchLength],[deskBenchX,475,benchZ]);
-    add('책상 쪽 복제 좌방석',[450,60,benchLength],[deskBenchX,520,benchZ],'cinemaFabric');
-    add('책상 쪽 벤치 지지판',[18,460,benchLength],[deskBenchX+216,230,benchZ]);
-    add('책상 쪽 벤치 안쪽 지지판',[18,460,benchLength],[deskBenchX-216,230,benchZ]);
+    const deskBenchWidth=500;
+    const deskBenchX=deskInnerX-140;
+    add('책상 쪽 업무용 벤치 상판',[deskBenchWidth,30,benchLength],[deskBenchX,475,benchZ]);
+    add('책상 쪽 복제 좌방석',[deskBenchWidth,60,benchLength],[deskBenchX,520,benchZ],'cinemaFabric');
+    add('책상 쪽 벤치 지지판',[18,460,benchLength],[deskBenchX+241,230,benchZ]);
+    add('책상 쪽 벤치 안쪽 지지판',[18,460,benchLength],[deskBenchX-241,230,benchZ]);
   }
   return parts;
 }
@@ -834,7 +835,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=44;
+  state.layoutVersion=45;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -867,7 +868,17 @@ function loadPlan5(){
     }
     if(y===1090) part.hideWhenRow2Folded=true;
   }
-  setPersonPose([0,30,seatZ-30],180);
+  const workSeat=state.objects.find(o=>o.name==='책상 쪽 복제 좌방석');
+  const furnitureAxisZ=deskFront+deskRear;
+  const rotatePosition=([x,y,z])=>[-x,y,furnitureAxisZ-z];
+  for(const part of state.objects){
+    if(part.material==='passengerSeat'||part.material==='passengerWall'||part.name.startsWith('2열 ')) continue;
+    part.pos=rotatePosition(part.pos);
+    if(part.openPos) part.openPos=rotatePosition(part.openPos);
+    part.rot[1]+=180;
+  }
+  if(workSeat) setPersonPose([workSeat.pos[0]+40,150,workSeat.pos[2]],270);
+  else setPersonPose([0,30,seatZ-30],180);
   state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
   rebuildObjects();
   saveLocal();
@@ -897,7 +908,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<44)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<45)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
