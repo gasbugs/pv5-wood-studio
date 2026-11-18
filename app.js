@@ -807,13 +807,17 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=37;
+  state.layoutVersion=38;
   state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
   state.objects=[
     {id:uid(),name:'우측 업무 책상 상판 · 깊이 700mm · 높이 660mm',size:[deskDepth,30,deskRear-deskFront],pos:[deskX,645,(deskFront+deskRear)/2],rot:[0,0,0],material:'cinemaOak'},
-    ...[deskFront+30,deskRear-30].map((z,i)=>({id:uid(),name:`우측 책상 ${i+1}번 지지판`,size:[supportWidth,605,60],pos:[state.cargo.width/2-supportWidth/2,327.5,z],rot:[0,0,0],material:'cinemaOak'})),
+    ...[deskFront+30,deskRear-30].map((z,i)=>{
+      const rearCabinetHalf=Math.min(840,state.cargo.width-100)/2;
+      const width=i===0?supportWidth:Math.min(supportWidth,state.cargo.width/2-rearCabinetHalf);
+      return {id:uid(),name:`우측 책상 ${i+1}번 지지판`,size:[width,605,60],pos:[state.cargo.width/2-width/2,327.5,z],rot:[0,0,0],material:'cinemaOak'};
+    }),
     {id:uid(),name:'패신저 순정 2열 6할 좌방석 · 근사 모델',size:[wideSeat,100,500],pos:[wideX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
     {id:uid(),name:'패신저 순정 2열 4할 좌방석 · 근사 모델',size:[narrowSeat,100,500],pos:[narrowX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
     {id:uid(),name:'패신저 순정 2열 6할 등받이 · 리클라이닝 근사',size:[wideSeat,600,90],pos:[wideX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
@@ -855,7 +859,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<37)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<38)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
