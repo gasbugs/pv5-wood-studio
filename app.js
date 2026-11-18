@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const $ = (id) => document.getElementById(id);
-const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, cinemaOak: 0x8a6547, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, cinemaFabric: 0x24384f, linenWall: 0xd8d0c3, sageWall: 0x87938a, taupeWall: 0x8c7d70, cinemaWall: 0x596063, screen: 0x24343d, white: 0xe8e7e2 };
-const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', cinemaOak: '모던 스모크드 오크', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', cinemaFabric: '딥 네이비 패브릭', linenWall: '리넨 반투명 벽', sageWall: '세이지 반투명 벽', taupeWall: '토프 반투명 벽', cinemaWall: '웜 그라파이트 반투명 벽', screen: '모니터 화면', white: '화이트 기기' };
+const materialColors = { birch: 0xd7b887, oak: 0xaa7c4e, walnut: 0x3f2b24, cinemaOak: 0x8a6547, black: 0x282b29, fabric: 0xc8b9a3, burgundy: 0x4b2028, cinemaFabric: 0x24384f, passengerSeat: 0x34495e, linenWall: 0xd8d0c3, sageWall: 0x87938a, taupeWall: 0x8c7d70, cinemaWall: 0x596063, passengerWall: 0x9aa4aa, screen: 0x24343d, white: 0xe8e7e2 };
+const materialLabels = { birch: '자작 합판', oak: '오크', walnut: '월넛', cinemaOak: '모던 스모크드 오크', black: '블랙 코팅', fabric: '베이지 쿠션', burgundy: '버건디 패브릭', cinemaFabric: '딥 네이비 패브릭', passengerSeat: '패신저 네이비 시트', linenWall: '리넨 반투명 벽', sageWall: '세이지 반투명 벽', taupeWall: '토프 반투명 벽', cinemaWall: '웜 그라파이트 반투명 벽', passengerWall: '패신저 그레이 반투명 벽', screen: '모니터 화면', white: '화이트 기기' };
 const presets = {
   floor: { name: '바닥 판', size: [1200, 18, 900], pos: [0, 40, 0] },
   wall: { name: '세로 칸막이', size: [18, 700, 900], pos: [-450, 370, 0] },
@@ -557,7 +557,7 @@ function loadPlan3(){
   $('toggleStorage').checked=false;
   // Keep the pelvis on the bed edge while placing knees and feet in the open desk bay.
   setPersonPose([deskInnerX-180,10,desk.pos[2]-desk.size[2]/2+500],90,true);
-  state.layoutVersion=34;
+  state.layoutVersion=35;
   state.layoutName='3안 · 2안 + 트렁크 전폭 수납함';
   state.objects.push(
     {id:uid(),name:'트렁크 수납함 바닥판 · 내부가 빈 프레임',size:[cabinetWidth,30,cabinetDepth],pos:[0,15,cabinetZ],rot:[0,0,0],material:'oak'},
@@ -745,6 +745,46 @@ function loadPlan4(){
   saveLocal();
 }
 
+function loadPlan5(){
+  const rear=state.cargo.length/2;
+  const deskWidth=state.cargo.width-100;
+  const deskDepth=700;
+  const deskZ=rear-40-deskDepth/2;
+  const deskInnerEdge=deskZ-deskDepth/2;
+  const seatWidth=Math.min(1380,state.cargo.width-120);
+  const splitGap=18;
+  const wideSeat=Math.round((seatWidth-splitGap)*.6);
+  const narrowSeat=seatWidth-splitGap-wideSeat;
+  const seatLeft=-seatWidth/2;
+  const wideX=seatLeft+wideSeat/2;
+  const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
+  const seatZ=-620;
+  const backrestZ=seatZ+255;
+  state.layoutVersion=35;
+  state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 후면 업무 책상';
+  state.storageOpen=false;
+  $('toggleStorage').checked=false;
+  state.objects=[
+    {id:uid(),name:'후면 업무 책상 상판 · 깊이 700mm · 높이 660mm',size:[deskWidth,30,deskDepth],pos:[0,645,deskZ],rot:[0,0,0],material:'cinemaOak'},
+    {id:uid(),name:'후면 책상 왼쪽 측판 지지대',size:[60,605,600],pos:[-deskWidth/2+30,327.5,deskZ+50],rot:[0,0,0],material:'cinemaOak'},
+    {id:uid(),name:'후면 책상 오른쪽 측판 지지대',size:[60,605,600],pos:[deskWidth/2-30,327.5,deskZ+50],rot:[0,0,0],material:'cinemaOak'},
+    {id:uid(),name:'패신저 순정 2열 6할 좌방석 · 근사 모델',size:[wideSeat,100,500],pos:[wideX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
+    {id:uid(),name:'패신저 순정 2열 4할 좌방석 · 근사 모델',size:[narrowSeat,100,500],pos:[narrowX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
+    {id:uid(),name:'패신저 순정 2열 6할 등받이 · 리클라이닝 근사',size:[wideSeat,600,90],pos:[wideX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
+    {id:uid(),name:'패신저 순정 2열 4할 등받이 · 리클라이닝 근사',size:[narrowSeat,600,90],pos:[narrowX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
+    {id:uid(),name:'2열 시트 하부 폴드&다이브 베이스',size:[seatWidth,120,420],pos:[0,270,seatZ+20],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'2열 왼쪽 바닥 고정 레일',size:[70,35,560],pos:[-seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'2열 오른쪽 바닥 고정 레일',size:[70,35,560],pos:[seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
+    ...[-seatWidth/3,0,seatWidth/3].map((x,i)=>({id:uid(),name:`패신저 2열 ${i+1}번 높이조절식 헤드레스트`,size:[220,170,90],pos:[x,1090,backrestZ+38],rot:[8,0,0],material:'passengerSeat'}))
+  ];
+  state.objects.push(...rearDeskDevices(state.objects[0]));
+  state.objects.push(...sideWallObjects('passengerWall',.22,'5안 패신저 그레이'));
+  setPersonPose([0,30,seatZ-30],180);
+  state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
+  rebuildObjects();
+  saveLocal();
+}
+
 function exportProject(){ const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pv5-cargo-layout.json';a.click();URL.revokeObjectURL(url); }
 function importProject(file){ const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data.cargo||!Array.isArray(data.objects))throw new Error();Object.assign(state,data);syncSettingsUI();rebuildCargo();rebuildObjects();saveLocal();}catch{$('boundaryWarning').textContent='올바른 PV5 설계 파일이 아닙니다.';$('boundaryWarning').classList.add('show');setTimeout(()=>{$('boundaryWarning').textContent='선택한 판이 적재함 경계를 벗어났습니다.';$('boundaryWarning').classList.remove('show');},2400);}};r.readAsText(file); }
 function syncSettingsUI(){ $('cargoLength').value=state.cargo.length;$('cargoWidth').value=state.cargo.width;$('wheelhouseWidth').value=state.cargo.wheelhouseWidth||1330;$('cargoHeight').value=state.cargo.height;$('unitCost').value=state.unitCost;$('toggleShell').checked=state.shell;$('toggleGrid').checked=state.grid;$('togglePerson').checked=state.person;$('toggleStorage').checked=state.storageOpen; }
@@ -759,7 +799,7 @@ $('toggleShell').addEventListener('change',e=>{state.shell=e.target.checked;carg
 $('togglePerson').addEventListener('change',e=>{state.person=e.target.checked;updatePerson();saveLocal();});
 $('toggleStorage').addEventListener('change',e=>{state.storageOpen=e.target.checked;rebuildObjects();updatePerson();saveLocal();});
 $('resetView').addEventListener('click',()=>setView('perspective'));$('saveProject').addEventListener('click',()=>{saveLocal();$('saveState').innerHTML='<i></i> 설계를 저장했습니다';setTimeout(saveLocal,1800);});
-$('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('loadPlan4').addEventListener('click',loadPlan4);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
+$('loadPlan1').addEventListener('click',loadPlan1);$('loadPlan2').addEventListener('click',loadPlan2);$('loadPlan3').addEventListener('click',loadPlan3);$('loadPlan4').addEventListener('click',loadPlan4);$('loadPlan5').addEventListener('click',loadPlan5);$('clearAll').addEventListener('click',()=>{state.objects=[];state.selectedId=null;rebuildObjects();saveLocal();});$('exportProject').addEventListener('click',exportProject);$('importProject').addEventListener('change',e=>e.target.files[0]&&importProject(e.target.files[0]));
 $('cargoToggle').addEventListener('click',()=>{$('cargoFields').classList.toggle('collapsed');$('cargoToggle').classList.toggle('closed');});
 ['cargoLength','cargoWidth','wheelhouseWidth','cargoHeight','unitCost'].forEach(id=>$(id).addEventListener('change',()=>{state.cargo.length=Math.max(500,Number($('cargoLength').value)||2255);state.cargo.width=Math.max(500,Number($('cargoWidth').value)||1565);state.cargo.wheelhouseWidth=Math.min(state.cargo.width,Math.max(500,Number($('wheelhouseWidth').value)||1330));state.cargo.height=Math.max(500,Number($('cargoHeight').value)||1520);state.unitCost=Math.max(0,Number($('unitCost').value)||0);syncSettingsUI();rebuildCargo();updateSummary();selectObject(state.selectedId);saveLocal();}));
 
@@ -767,7 +807,8 @@ loadLocal(); syncSettingsUI(); initThree();
 // Refresh saved plan 3/4 once so the real rear opening, mat and clear-opening doors replace cached objects.
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
-if(hasPlan3&&state.layoutVersion!==34){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion!==35)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
