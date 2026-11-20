@@ -852,40 +852,41 @@ function mirrorPlanFurniture(){
 function loadPlan5(){
   state.furnitureMirrored=false;
   const rear=state.cargo.length/2;
-  const deskDepth=700;
+  const seatWidth=Math.min(900,state.cargo.width-120);
+  const deskDepth=seatWidth;
   const deskFront=-rear+180+775+50;
   const deskRear=rear-40;
   const deskInnerX=state.cargo.width/2-deskDepth;
   const deskX=deskInnerX+deskDepth/2;
   const supportWidth=deskDepth-250;
-  const seatWidth=Math.min(1380,state.cargo.width-120);
   const splitGap=18;
-  const wideSeat=Math.round((seatWidth-splitGap)*.6);
+  const wideSeat=Math.round((seatWidth-splitGap)/2);
   const narrowSeat=seatWidth-splitGap-wideSeat;
-  const seatLeft=-seatWidth/2;
+  const seatLeft=-state.cargo.width/2+24;
+  const seatCenter=seatLeft+seatWidth/2;
   const wideX=seatLeft+wideSeat/2;
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=47;
-  state.layoutName='5안 · 패신저 순정 2열 3인 시트 + 우측 업무 책상';
+  state.layoutVersion=48;
+  state.layoutName='5안 · 왼쪽 2열 2인석 + 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
   state.objects=[
-    {id:uid(),name:'우측 업무 책상 상판 · 깊이 700mm · 높이 800mm',size:[deskDepth,30,deskRear-deskFront],pos:[deskX,785,(deskFront+deskRear)/2],rot:[0,0,0],material:'cinemaOak'},
+    {id:uid(),name:`업무 책상 상판 · 깊이 ${deskDepth}mm · 높이 800mm`,size:[deskDepth,30,deskRear-deskFront],pos:[deskX,785,(deskFront+deskRear)/2],rot:[0,0,0],material:'cinemaOak'},
     ...[deskFront+30,deskRear-30].map((z,i)=>{
       const rearCabinetHalf=Math.min(840,state.cargo.width-100)/2;
       const width=i===0?supportWidth:Math.min(supportWidth,state.cargo.width/2-rearCabinetHalf);
       return {id:uid(),name:`우측 책상 ${i+1}번 지지판`,size:[width,745,60],pos:[state.cargo.width/2-width/2,397.5,z],rot:[0,0,0],material:'cinemaOak'};
     }),
-    {id:uid(),name:'패신저 순정 2열 6할 좌방석 · 근사 모델',size:[wideSeat,100,500],pos:[wideX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
-    {id:uid(),name:'패신저 순정 2열 4할 좌방석 · 근사 모델',size:[narrowSeat,100,500],pos:[narrowX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
-    {id:uid(),name:'패신저 순정 2열 6할 등받이 · 리클라이닝 근사',size:[wideSeat,600,90],pos:[wideX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
-    {id:uid(),name:'패신저 순정 2열 4할 등받이 · 리클라이닝 근사',size:[narrowSeat,600,90],pos:[narrowX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
-    {id:uid(),name:'2열 시트 하부 폴드&다이브 베이스',size:[seatWidth,120,420],pos:[0,270,seatZ+20],foldedPos:[0,300,seatZ+20],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'2열 왼쪽 바닥 고정 레일',size:[70,35,560],pos:[-seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
-    {id:uid(),name:'2열 오른쪽 바닥 고정 레일',size:[70,35,560],pos:[seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
-    ...[-seatWidth/3,0,seatWidth/3].map((x,i)=>({id:uid(),name:`패신저 2열 ${i+1}번 높이조절식 헤드레스트`,size:[220,170,90],pos:[x,1090,backrestZ+38],rot:[8,0,0],material:'passengerSeat'}))
+    {id:uid(),name:'2열 왼쪽 좌방석 · 근사 모델',size:[wideSeat,100,500],pos:[wideX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
+    {id:uid(),name:'2열 오른쪽 좌방석 · 근사 모델',size:[narrowSeat,100,500],pos:[narrowX,380,seatZ],rot:[0,0,0],material:'passengerSeat'},
+    {id:uid(),name:'2열 왼쪽 등받이',size:[wideSeat,600,90],pos:[wideX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
+    {id:uid(),name:'2열 오른쪽 등받이',size:[narrowSeat,600,90],pos:[narrowX,720,backrestZ],rot:[8,0,0],material:'passengerSeat'},
+    {id:uid(),name:'2열 시트 하부 폴드&다이브 베이스',size:[seatWidth,120,420],pos:[seatCenter,270,seatZ+20],foldedPos:[seatCenter,300,seatZ+20],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'2열 왼쪽 바닥 고정 레일',size:[70,35,560],pos:[seatCenter-seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
+    {id:uid(),name:'2열 오른쪽 바닥 고정 레일',size:[70,35,560],pos:[seatCenter+seatWidth*.32,192.5,seatZ+10],rot:[0,0,0],material:'black'},
+    ...[wideX,narrowX].map((x,i)=>({id:uid(),name:`2열 ${i+1}번 헤드레스트`,size:[220,170,90],pos:[x,1090,backrestZ+38],rot:[8,0,0],material:'passengerSeat'}))
   ];
   const deskDevices=sideDeskDevices(state.objects[0],deskInnerX);
   deskDevices.forEach(device=>{device.pos[1]+=140;});
@@ -910,10 +911,10 @@ function loadPlan5(){
     setPersonPose([workSeat.pos[0]-40,150,workSeat.pos[2]],90);
     state.personPose.plan5WorkSeat=true;
   }
-  else setPersonPose([0,30,seatZ-30],180);
+  else setPersonPose([seatCenter,30,seatZ-30],180);
   if(state.plan5Rotated??true) rotatePlanFurniture();
   updatePerson();
-  state.selectedId=state.objects.find(o=>o.name.startsWith('패신저 순정 2열 6할 좌방석')).id;
+  state.selectedId=state.objects.find(o=>o.name.startsWith('2열 왼쪽 좌방석')).id;
   rebuildObjects();
   saveLocal();
 }
@@ -960,7 +961,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<47)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<48)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
