@@ -799,13 +799,14 @@ function plan5Storage(deskRear, deskInnerX, backrestZ){
   const benchLength=benchRear-benchFront;
   if(benchLength>0){
     const benchZ=(benchFront+benchRear)/2;
-    const deskBenchWidth=500;
-    const deskBenchX=deskInnerX-140;
+    const deskBenchWidth=450;
+    const deskBenchX=deskInnerX-40;
     add('책상 쪽 업무용 벤치 상판',[deskBenchWidth,30,benchLength],[deskBenchX,475,benchZ]);
     add('책상 쪽 복제 좌방석',[deskBenchWidth,60,benchLength],[deskBenchX,520,benchZ],'cinemaFabric');
     add('업무용 벤치 등받이',[24,470,benchLength],[deskBenchX-deskBenchWidth/2-12,725,benchZ]);
-    add('책상 쪽 벤치 지지판',[18,460,benchLength],[deskBenchX+241,230,benchZ]);
-    add('책상 쪽 벤치 안쪽 지지판',[18,460,benchLength],[deskBenchX-241,230,benchZ]);
+    const supportOffset=deskBenchWidth/2-9;
+    add('책상 쪽 벤치 지지판',[18,460,benchLength],[deskBenchX+supportOffset,230,benchZ]);
+    add('책상 쪽 벤치 안쪽 지지판',[18,460,benchLength],[deskBenchX-supportOffset,230,benchZ]);
   }
   return parts;
 }
@@ -853,7 +854,7 @@ function loadPlan5(){
   state.furnitureMirrored=false;
   const rear=state.cargo.length/2;
   const seatWidth=Math.min(900,state.cargo.width-120);
-  const deskDepth=seatWidth;
+  const deskDepth=Math.min(800,state.cargo.width-100);
   const deskFront=-rear+180+775+50;
   const deskRear=rear-40;
   const deskInnerX=state.cargo.width/2-deskDepth;
@@ -868,7 +869,7 @@ function loadPlan5(){
   const narrowX=seatLeft+wideSeat+splitGap+narrowSeat/2;
   const seatZ=-470;
   const backrestZ=seatZ+255;
-  state.layoutVersion=48;
+  state.layoutVersion=49;
   state.layoutName='5안 · 왼쪽 2열 2인석 + 업무 책상';
   state.storageOpen=false;
   $('toggleStorage').checked=false;
@@ -961,7 +962,7 @@ loadLocal(); syncSettingsUI(); initThree();
 const hasPlan3=state.objects.some(o=>(o.size[0]===104&&o.size[1]===390&&o.size[2]===260)||(o.size[0]===390&&o.size[1]===104&&o.size[2]===260));
 const hadPlan4=String(state.layoutName||'').startsWith('4');
 if(hasPlan3&&state.layoutVersion!==35){if(hadPlan4)loadPlan4();else loadPlan3();}
-if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<48)loadPlan5();
+if(String(state.layoutName||'').startsWith('5')&&state.layoutVersion<49)loadPlan5();
 const hasCeilingWall=state.objects.some(o=>String(o.name||'').includes('천장 반투명 패널'));
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('1'))loadPlan1();
 if(hasCeilingWall&&String(state.layoutName||'').startsWith('2'))loadPlan2();
